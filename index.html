@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบผังกระบวนการเสนอรายงานผลการตรวจสอบภายใน</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Sarabun & Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            prompt: ['Prompt', 'sans-serif'],
+            sarabun: ['Sarabun', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    h1, h2, h3, h4, .font-heading {
+      font-family: 'Prompt', sans-serif;
+    }
+    
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+      }
+      .card-step {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20">
+          <i class="fa-solid fa-diagram-project text-lg"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-800">
+              Interactive Workflow
+            </span>
+            <span id="savedIndicator" class="text-xs text-emerald-600 font-medium hidden">
+              <i class="fa-solid fa-circle-check"></i> บันทึกแล้ว
+            </span>
+          </div>
+          <h1 class="text-lg font-bold text-slate-800 leading-tight">ระบบผังกระบวนการเสนอรายงานและแจ้งข้อสั่งการ</h1>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center flex-wrap gap-2">
+        <button type="button" onclick="openAddPhaseModal()" class="inline-flex items-center px-3.5 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition">
+          <i class="fa-solid fa-folder-plus mr-1.5"></i> เพิ่มกระบวนการ
+        </button>
+
+        <button type="button" onclick="openAddModal()" class="inline-flex items-center px-3.5 py-2 text-sm font-medium rounded-lg text-white bg-sky-600 hover:bg-sky-700 shadow-sm transition">
+          <i class="fa-solid fa-plus mr-1.5"></i> เพิ่มขั้นตอน
+        </button>
+
+        <button type="button" onclick="toggleViewMode()" id="viewToggleBtn" class="inline-flex items-center px-3.5 py-2 text-sm font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+          <i class="fa-solid fa-table-list mr-1.5"></i> ดูตารางสรุป SOP
+        </button>
+
+        <button type="button" onclick="window.print()" class="inline-flex items-center px-3.5 py-2 text-sm font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+          <i class="fa-solid fa-print mr-1.5"></i> พิมพ์ / PDF
+        </button>
+
+        <button type="button" onclick="exportUpdatedHTML()" class="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm transition">
+          <i class="fa-solid fa-file-arrow-down mr-1.5 text-base"></i> Export ไฟล์ HTML
+        </button>
+
+        <button type="button" onclick="resetToDefaultData()" title="คืนค่าข้อมูลเริ่มต้น" class="p-2 text-slate-400 hover:text-rose-600 transition rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Document Info Card -->
+    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white rounded-2xl p-6 sm:p-8 shadow-xl mb-8 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none text-9xl text-white">
+        <i class="fa-solid fa-folder-tree"></i>
+      </div>
+
+      <div class="relative z-10 max-w-4xl">
+        <div class="flex items-center gap-2 mb-2 text-sky-400 text-sm font-medium">
+          <i class="fa-solid fa-shield-halved"></i> มาตรฐานกระบวนการปฏิบัติงาน & การควบคุมความมั่นคงปลอดภัยข้อมูล
+        </div>
+        <div class="group flex items-start gap-3">
+          <h2 id="wfTitle" class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug">
+            กระบวนการเสนอรายงานผลการตรวจสอบภายในและการแจ้งข้อสั่งการ
+          </h2>
+          <button type="button" onclick="editWorkflowInfo()" class="no-print opacity-60 hover:opacity-100 text-sm bg-white/10 hover:bg-white/20 p-2 rounded-lg transition" title="แก้ไขหัวข้อและคำชี้แจง">
+            <i class="fa-solid fa-pen"></i>
+          </button>
+        </div>
+        <p id="wfDesc" class="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
+          ผังขั้นตอนการเสนอรายงานผลการตรวจสอบ ตั้งแต่การร่างรายงาน สอบทาน เสนออธิการบดีสั่งการ และส่งออกหนังสือแจ้งหน่วยรับตรวจ พร้อมแนวปฏิบัติการจำกัดสิทธิ์ไฟล์ความลับผ่านลิงก์ SharePoint แทนการแนบไฟล์เอกสาร
+        </p>
+
+        <div class="mt-6 flex flex-wrap gap-3 text-xs">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-200 border border-sky-400/30">
+            <i class="fa-solid fa-link"></i> จุดเปลี่ยนผ่านความปลอดภัย: สารบรรณแนบ SharePoint Link
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+            <i class="fa-solid fa-envelope-open-text"></i> สารบรรณเปิดเรื่องใหม่เพื่อแจ้งผลหน่วยรับตรวจ
+          </div>
+          <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
+            <i class="fa-solid fa-clock"></i> SLA รวมทั้งระบบ: กำหนดและแก้ไขได้ทุกขั้นตอน
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm no-print">
+      <div class="relative w-full sm:w-80">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+        <input type="text" id="searchInput" oninput="renderApp()" placeholder="ค้นหาบทบาท, ขั้นตอน, หรือคำสำคัญ..." 
+               class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition">
+      </div>
+
+      <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+        <span class="text-xs text-slate-500 hidden sm:inline">กรองหมวดหมู่:</span>
+        <select id="phaseFilter" onchange="renderApp()" class="text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <option value="ALL">ทุกหมวดหมู่ (แสดงทั้งหมด)</option>
+        </select>
+        <button type="button" onclick="toggleExpandAll()" id="expandBtn" class="text-xs font-medium px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+          <i class="fa-solid fa-arrows-up-down mr-1"></i> ยุบ/ขยาย
+        </button>
+      </div>
+    </div>
+
+    <!-- Dynamic Flowchart View by Phases -->
+    <div id="flowchartView" class="space-y-10">
+      <!-- Dynamically generated phase sections -->
+    </div>
+
+    <div id="tableView" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+        <div>
+          <h3 class="font-heading font-bold text-base text-slate-800">ตารางแสดงรายละเอียดขั้นตอนการปฏิบัติงาน (SOP Table)</h3>
+          <p class="text-xs text-slate-500">สามารถคลิกแถวเพื่อเปิดหน้าต่างแก้ไขข้อมูลได้ทันที</p>
+        </div>
+        <span class="text-xs text-slate-400">คลิกที่แถวเพื่อแก้ไข</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-600">
+          <thead class="bg-slate-100 text-xs font-bold uppercase text-slate-700 tracking-wider">
+            <tr>
+              <th class="px-4 py-3 text-center w-16">ลำดับ</th>
+              <th class="px-4 py-3 w-48">ผู้รับผิดชอบ / ตำแหน่ง</th>
+              <th class="px-4 py-3">ขั้นตอนและกิจกรรมหลัก</th>
+              <th class="px-4 py-3 w-56">เอกสาร / การรักษาความปลอดภัย</th>
+              <th class="px-4 py-3 text-center w-28">ระยะเวลา (SLA)</th>
+              <th class="px-4 py-3 text-center w-24 no-print">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody id="sopTableBody" class="divide-y divide-slate-200">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="stepModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative my-8 border border-slate-100 transition-all">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div id="modalIconBox" class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <h3 id="modalTitle" class="font-heading font-bold text-lg text-slate-800">แก้ไขข้อมูลขั้นตอน</h3>
+            <p class="text-xs text-slate-400">ปรับปรุงรายละเอียดเนื้อหา ผู้รับผิดชอบ และ SLA</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="stepForm" onsubmit="handleSaveStep(event)" class="mt-5 space-y-4">
+        <input type="hidden" id="editStepId">
+        <input type="hidden" id="insertAfterId">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="formPhase" class="block text-xs font-semibold text-slate-700 mb-1">หมวดหมู่ขั้นตอน (Phase) *</label>
+            <select id="formPhase" required class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+          <div>
+            <label for="formRole" class="block text-xs font-semibold text-slate-700 mb-1">บทบาท / ผู้รับผิดชอบ (Role) *</label>
+            <input type="text" id="formRole" required placeholder="เช่น ผู้ตรวจสอบ, หัวหน้างาน, ผอ., งานสารบรรณ..." 
+                   class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="sm:col-span-2">
+            <label for="formTitle" class="block text-xs font-semibold text-slate-700 mb-1">ชื่อขั้นตอน (Step Title) *</label>
+            <input type="text" id="formTitle" required placeholder="เช่น จัดทำและเสนอรายงานผลการตรวจสอบ" 
+                   class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+          </div>
+          <div>
+            <label for="formSLA" class="block text-xs font-semibold text-slate-700 mb-1">ระยะเวลา (SLA)</label>
+            <input type="text" id="formSLA" placeholder="เช่น 1 วันทำการ" 
+                   class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label for="formDesc" class="block text-xs font-semibold text-slate-700 mb-1">รายละเอียดการปฏิบัติงาน (Activities) *</label>
+          <textarea id="formDesc" rows="3" required placeholder="ระบุการกระทำ รายละเอียดการตรวจสอบ หรือเงื่อนไขของขั้นตอนนี้..." 
+                    class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="formDoc" class="block text-xs font-semibold text-slate-700 mb-1">
+              <i class="fa-solid fa-paperclip text-slate-400 mr-1"></i> เอกสารแนบ / สิ่งที่ส่งมาด้วย
+            </label>
+            <input type="text" id="formDoc" placeholder="เช่น บันทึกข้อความ, ร่างรายงานผล" 
+                   class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+          </div>
+          <div>
+            <label for="formSecurity" class="block text-xs font-semibold text-slate-700 mb-1">
+              <i class="fa-solid fa-shield-cat text-slate-400 mr-1"></i> จุดควบคุม / ระบบจัดเก็บ (SharePoint/e-Doc)
+            </label>
+            <input type="text" id="formSecurity" placeholder="เช่น SharePoint Link (จำกัดสิทธิ์ View Only)" 
+                   class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label for="formTheme" class="block text-xs font-semibold text-slate-700 mb-1">โทนสีการแสดงผล</label>
+            <select id="formTheme" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+              <option value="sky">Sky (ฟ้า - ผู้ตรวจสอบ / เอกสาร)</option>
+              <option value="amber">Amber (ส้มเหลือง - หัวหน้างานสอบทาน)</option>
+              <option value="emerald">Emerald (เขียว - ผู้อำนวยการอนุมัติ)</option>
+              <option value="purple">Purple (ม่วง - งานสารบรรณ/SharePoint)</option>
+              <option value="rose">Rose (แดงชมพู - อธิการบดีสั่งการ)</option>
+              <option value="indigo">Indigo (น้ำเงินคราม - สนง.อธิการบดี)</option>
+              <option value="teal">Teal (เขียวหัวเป็ด - หน่วยรับตรวจ)</option>
+            </select>
+          </div>
+          <div>
+            <label for="formIcon" class="block text-xs font-semibold text-slate-700 mb-1">ไอคอน (FontAwesome Class)</label>
+            <select id="formIcon" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+              <option value="fa-file-lines">📄 บันทึก/เอกสาร (fa-file-lines)</option>
+              <option value="fa-user-check">✔️ หัวหน้างานสอบทาน (fa-user-check)</option>
+              <option value="fa-signature">✍️ ผอ. ลงนาม (fa-signature)</option>
+              <option value="fa-cloud-arrow-up">☁️ สารบรรณ SharePoint (fa-cloud-arrow-up)</option>
+              <option value="fa-building-columns">🏛️ สำนักงานอธิการบดี (fa-building-columns)</option>
+              <option value="fa-stamp">🔖 อธิการบดีสั่งการ (fa-stamp)</option>
+              <option value="fa-envelope-open-text">✉️ แจ้งหน่วยรับตรวจ (fa-envelope-open-text)</option>
+              <option value="fa-clipboard-check">📋 ตรวจรับและทำแผน (fa-clipboard-check)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-5 border-t border-slate-100">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+            ยกเลิก
+          </button>
+          <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-sky-600 hover:bg-sky-700 rounded-lg shadow-sm transition">
+            <i class="fa-solid fa-floppy-disk mr-1.5"></i> บันทึกข้อมูล
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="headerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="font-heading font-bold text-lg text-slate-800">แก้ไขข้อมูลหัวเรื่อง Workflow</h3>
+        <button type="button" onclick="closeHeaderModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="mt-4 space-y-4">
+        <div>
+          <label for="editWfTitle" class="block text-xs font-semibold text-slate-700 mb-1">ชื่อกระบวนการ (Workflow Title)</label>
+          <input type="text" id="editWfTitle" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
+        </div>
+        <div>
+          <label for="editWfDesc" class="block text-xs font-semibold text-slate-700 mb-1">คำอธิบายและวัตถุประสงค์</label>
+          <textarea id="editWfDesc" rows="3" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeHeaderModal()" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">ยกเลิก</button>
+          <button type="button" onclick="saveWorkflowHeader()" class="px-5 py-2 text-sm text-white bg-sky-600 hover:bg-sky-700 rounded-lg font-medium">บันทึก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase Modal (เพิ่ม / แก้ไข กระบวนการ) -->
+  <div id="phaseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-base">
+            <i class="fa-solid fa-layer-group"></i>
+          </div>
+          <div>
+            <h3 id="phaseModalTitle" class="font-heading font-bold text-base text-slate-800">เพิ่มกระบวนการใหม่</h3>
+            <p class="text-xs text-slate-400">สร้างส่วนงานหรือกลุ่มขั้นตอนใหม่ในผังกระบวนการ</p>
+          </div>
+        </div>
+        <button type="button" onclick="closePhaseModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="phaseForm" onsubmit="handleSavePhase(event)" class="mt-4 space-y-4">
+        <input type="hidden" id="editPhaseId">
+        <div>
+          <label for="formPhaseTitle" class="block text-xs font-semibold text-slate-700 mb-1">ชื่อกระบวนการ (Process Title) *</label>
+          <input type="text" id="formPhaseTitle" required placeholder="เช่น กระบวนการที่ 3: การติดตามผลการแก้ไข (Follow-up)" 
+                 class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label for="formPhaseSubtitle" class="block text-xs font-semibold text-slate-700 mb-1">คำอธิบายย่อย (Subtitle)</label>
+          <input type="text" id="formPhaseSubtitle" placeholder="เช่น ติดตามการปฏิบัติตามข้อเสนอแนะและรายงานผลรอบ 3-6 เดือน" 
+                 class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div>
+          <label for="formPhaseBadge" class="block text-xs font-semibold text-slate-700 mb-1">ป้ายกำกับเส้นทาง / ขอบเขต (Badge)</label>
+          <input type="text" id="formPhaseBadge" placeholder="เช่น หน่วยรับตรวจ ➔ หน่วยตรวจสอบภายใน" 
+                 class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closePhaseModal()" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">ยกเลิก</button>
+          <button type="submit" class="px-5 py-2 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium shadow-sm transition">
+            <i class="fa-solid fa-floppy-disk mr-1.5"></i> บันทึกกระบวนการ
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Footer -->
+  <footer class="mt-auto py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-400 no-print">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>© มาตรฐานคู่มือการปฏิบัติงาน หน่วยตรวจสอบภายใน (Internal Audit SOP Flowchart)</p>
+      <div class="flex items-center gap-4">
+        <span>สามารถ Export ไฟล์ HTML เพื่อส่งต่อหรือใช้งานออฟไลน์ได้ 100%</span>
+      </div>
+    </div>
+  </footer>
+
+  <script id="embedded-data">
+    const defaultWorkflowData = {
+      title: "กระบวนการเสนอรายงานผลการตรวจสอบภายในและการแจ้งข้อสั่งการ",
+      description: "ผังขั้นตอนการเสนอรายงานผลการตรวจสอบ ตั้งแต่การร่างรายงาน สอบทาน เสนออธิการบดีสั่งการ และส่งออกหนังสือแจ้งหน่วยรับตรวจ พร้อมแนวปฏิบัติการจำกัดสิทธิ์ไฟล์ความลับผ่านลิงก์ SharePoint แทนการแนบไฟล์เอกสาร",
+      phases: [
+        {
+          id: 1,
+          title: "กระบวนการที่ 1: การเสนอรายงานผลการตรวจสอบและขออนุมัติข้อสั่งการ",
+          subtitle: "ตั้งแต่ร่างรายงานฉบับสมบูรณ์จนถึงอธิการบดีลงนามข้อสั่งการ",
+          badge: "ภายในสำนักตรวจสอบ ➔ สำนักงานอธิการบดี"
+        },
+        {
+          id: 2,
+          title: "กระบวนการที่ 2: การแจ้งผลและข้อสั่งการแก่หน่วยรับตรวจ",
+          subtitle: "เปิดบันทึกข้อความเรื่องใหม่ ผ่าน ผอ. ลงนามส่งต่อไปยังหน่วยรับตรวจ",
+          badge: "สารบรรณเปิดเรื่องใหม่ ➔ หน่วยรับตรวจ"
+        }
+      ],
+      steps: [
+        {
+          id: 1,
+          phase: 1,
+          role: "ผู้ตรวจสอบ",
+          title: "ร่างเรื่องและเสนอรายงานผลการตรวจสอบ",
+          description: "ผู้ตรวจสอบจัดทำร่างบันทึกข้อความ แนบไฟล์รายงานผลการตรวจสอบฉบับสมบูรณ์ (Draft Report) เสนอหัวหน้างานพิจารณาผ่านระบบสารบรรณอิเล็กทรอนิกส์ (e-Doc)",
+          doc: "บันทึกข้อความเสนอเรื่อง + ไฟล์รายงานผล (.pdf / .docx)",
+          security: "ตรวจสอบความเรียบร้อยของหลักฐานประกอบ",
+          sla: "1 วันทำการ",
+          theme: "sky",
+          icon: "fa-file-lines"
+        },
+        {
+          id: 2,
+          phase: 1,
+          role: "หัวหน้างาน",
+          title: "สอบทานรายงานผลการตรวจสอบ",
+          description: "หัวหน้างานพิจารณาสอบทานความถูกต้อง ความสมบูรณ์ของเนื้อหา ข้อสังเกต และข้อเสนอแนะ หากเห็นชอบให้เสนอต่อไปยัง ผอ. (หากต้องปรับปรุงให้ส่งกลับผู้ตรวจสอบแก้ไข)",
+          doc: "บันทึกความเห็นชอบของหัวหน้างาน",
+          security: "จุด Double-check ตรวจสอบคุณภาพและความถูกต้อง",
+          sla: "1-2 วันทำการ",
+          theme: "amber",
+          icon: "fa-user-check"
+        },
+        {
+          id: 3,
+          phase: 1,
+          role: "ผู้อำนวยการ (ผอ.)",
+          title: "พิจารณาและลงนามเสนอเรื่อง",
+          description: "ผู้อำนวยการพิจารณาความสมบูรณ์และแนวทางเชิงนโยบาย ลงนามดิจิทัล (Digital Signature) และส่งเรื่องต่อไปยังงานสารบรรณเพื่อดำเนินการส่งออก",
+          doc: "รายงานผลฉบับที่ ผอ. ลงนามแล้ว",
+          security: "ลงนามอนุมัติเสนอเรื่องระดับหน่วยงาน",
+          sla: "1-2 วันทำการ",
+          theme: "emerald",
+          icon: "fa-signature"
+        },
+        {
+          id: 4,
+          phase: 1,
+          role: "งานสารบรรณ",
+          title: "ลงเลขที่/วันที่ & แปลงเป็น SharePoint Link เพื่อจำกัดสิทธิ์",
+          description: "1. นำไฟล์รายงานผลที่ ผอ. ลงนามแล้ว อัปโหลดขึ้นระบบ SharePoint ประจำสำนัก\n2. กำหนดสิทธิ์การเข้าถึงแบบจำกัดบุคคล (Specific People: อธิการบดี/จนท.สนง.อธิการบดี) และตั้งสิทธิ์ View Only\n3. แนบ SharePoint Link ลงในบันทึกข้อความแทนไฟล์แนบเดิม เพื่อป้องกันไฟล์รั่วไหล\n4. ลงเลขที่หนังสือและลงวันที่ส่งในระบบ e-Doc",
+          doc: "ทะเบียนคุมเลขหนังสือส่ง + ลิงก์ SharePoint กำหนดสิทธิ์",
+          security: "จุดเปลี่ยนความปลอดภัยข้อมูล: ห้ามส่งไฟล์แนบตรงๆ",
+          sla: "0.5 - 1 วันทำการ",
+          theme: "purple",
+          icon: "fa-cloud-arrow-up"
+        },
+        {
+          id: 5,
+          phase: 1,
+          role: "สำนักงานอธิการบดี",
+          title: "ตรวจรับเอกสารและจัดแฟ้มเสนอ",
+          description: "สำนักงานอธิการบดีตรวจรับหนังสือเข้าทางระบบ e-Doc ตรวจสอบความถูกต้องและทดสอบเปิดอ่าน SharePoint Link จากนั้นนำขึ้นเสนอต่ออธิการบดีตามวาระ",
+          doc: "บันทึกเสนอแฟ้มของ สนง.อธิการบดี",
+          security: "ประสานงานสารบรรณทันทีหากติดปัญหา Permission",
+          sla: "1-2 วันทำการ",
+          theme: "indigo",
+          icon: "fa-building-columns"
+        },
+        {
+          id: 6,
+          phase: 1,
+          role: "อธิการบดี",
+          title: "พิจารณาเห็นชอบและมีข้อสั่งการ",
+          description: "อธิการบดีพิจารณารายงานผลการตรวจสอบ ลงนามเห็นชอบ และบันทึกข้อสั่งการ/มอบหมายงานให้หน่วยรับตรวจถือปฏิบัติหรือแก้ไขปรับปรุง",
+          doc: "บันทึกข้อสั่งการของอธิการบดี",
+          security: "สิ้นสุดกระบวนการที่ 1 เสนอเรื่อง",
+          sla: "3-5 วันทำการ",
+          theme: "rose",
+          icon: "fa-stamp"
+        },
+        {
+          id: 7,
+          phase: 2,
+          role: "งานสารบรรณ",
+          title: "ตรวจรับหนังสือกลับ & สร้างเรื่องใหม่อีก 1 เรื่อง",
+          description: "เมื่องานสารบรรณตรวจรับหนังสือที่ส่งกลับมาจากสำนักงานอธิการบดีพร้อมข้อสั่งการแล้ว ให้ 'เปิดเรื่องใหม่' เพื่อแจ้งผลการตรวจสอบและข้อสั่งการไปยังหน่วยรับตรวจ โดยอ้างถึงเลขหนังสือเดิม แนบข้อสั่งการ และแนบลิงก์ SharePoint ที่กำหนดสิทธิ์สำหรับหน่วยรับตรวจ",
+          doc: "บันทึกแจ้งผลเรื่องใหม่ + สำเนาข้อสั่งการ + ลิงก์รายงาน",
+          security: "แยกเรื่องใหม่เพื่อความชัดเจนในการติดตามผล (Follow-up)",
+          sla: "0.5 วันทำการ",
+          theme: "purple",
+          icon: "fa-envelope-open-text"
+        },
+        {
+          id: 8,
+          phase: 2,
+          role: "ผู้อำนวยการ (ผอ.)",
+          title: "พิจารณาและลงนามส่งออกแจ้งหน่วยรับตรวจ",
+          description: "ผู้อำนวยการพิจารณาตรวจสอบความถูกต้องของบันทึกข้อความแจ้งผลเรื่องใหม่ และลงนามส่งออกถึงหัวหน้าหน่วยรับตรวจ เพื่อดำเนินการตามข้อสั่งการต่อไป",
+          doc: "บันทึกข้อความส่งออกฉบับสมบูรณ์",
+          security: "ตรวจสอบความถูกต้องของหน่วยงานผู้รับ",
+          sla: "1 วันทำการ",
+          theme: "emerald",
+          icon: "fa-signature"
+        },
+        {
+          id: 9,
+          phase: 2,
+          role: "หน่วยรับตรวจ (Auditee)",
+          title: "รับทราบผลการตรวจสอบและดำเนินการตามข้อสั่งการ",
+          description: "หน่วยรับตรวจตรวจรับหนังสือผ่านระบบ e-Doc และเปิดอ่านรายงานผลผ่าน SharePoint Link พร้อมจัดทำแผนปรับปรุงแก้ไข (Action Plan) ส่งกลับตามกรอบเวลาที่ระบุในข้อสั่งการ",
+          doc: "แผนปรับปรุงแก้ไขตามข้อเสนอแนะ (Action Plan)",
+          security: "นำเข้าสู่ระบบติดตามผลการตรวจสอบ (Audit Follow-up)",
+          sla: "ตามที่สั่งการ (เช่น 30 วัน)",
+          theme: "teal",
+          icon: "fa-clipboard-check"
+        }
+      ]
+    };
+  </script>
+
+  <script>
+    let workflowData = JSON.parse(JSON.stringify(defaultWorkflowData));
+    let isTableView = false;
+    let areAllExpanded = true;
+
+    const phaseColors = [
+      { bg: 'bg-sky-600', badge: 'bg-sky-50 text-sky-700 border-sky-200' },
+      { bg: 'bg-teal-600', badge: 'bg-teal-50 text-teal-700 border-teal-200' },
+      { bg: 'bg-indigo-600', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+      { bg: 'bg-purple-600', badge: 'bg-purple-50 text-purple-700 border-purple-200' },
+      { bg: 'bg-amber-600', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
+      { bg: 'bg-rose-600', badge: 'bg-rose-50 text-rose-700 border-rose-200' }
+    ];
+
+    const themeStyles = {
+      sky: {
+        bg: "bg-sky-50",
+        border: "border-sky-200",
+        text: "text-sky-700",
+        badge: "bg-sky-100 text-sky-800",
+        circle: "bg-sky-600 text-white"
+      },
+      amber: {
+        bg: "bg-amber-50",
+        border: "border-amber-200",
+        text: "text-amber-700",
+        badge: "bg-amber-100 text-amber-800",
+        circle: "bg-amber-600 text-white"
+      },
+      emerald: {
+        bg: "bg-emerald-50",
+        border: "border-emerald-200",
+        text: "text-emerald-700",
+        badge: "bg-emerald-100 text-emerald-800",
+        circle: "bg-emerald-600 text-white"
+      },
+      purple: {
+        bg: "bg-purple-50",
+        border: "border-purple-200",
+        text: "text-purple-700",
+        badge: "bg-purple-100 text-purple-800",
+        circle: "bg-purple-600 text-white"
+      },
+      rose: {
+        bg: "bg-rose-50",
+        border: "border-rose-200",
+        text: "text-rose-700",
+        badge: "bg-rose-100 text-rose-800",
+        circle: "bg-rose-600 text-white"
+      },
+      indigo: {
+        bg: "bg-indigo-50",
+        border: "border-indigo-200",
+        text: "text-indigo-700",
+        badge: "bg-indigo-100 text-indigo-800",
+        circle: "bg-indigo-600 text-white"
+      },
+      teal: {
+        bg: "bg-teal-50",
+        border: "border-teal-200",
+        text: "text-teal-700",
+        badge: "bg-teal-100 text-teal-800",
+        circle: "bg-teal-600 text-white"
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const saved = localStorage.getItem('internal_audit_workflow_data');
+      if (saved) {
+        try {
+          workflowData = JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved data:", e);
+        }
+      }
+      
+      // Ensure phases exist for backward compatibility
+      if (!workflowData.phases || !Array.isArray(workflowData.phases) || workflowData.phases.length === 0) {
+        workflowData.phases = [
+          {
+            id: 1,
+            title: "กระบวนการที่ 1: การเสนอรายงานผลการตรวจสอบและขออนุมัติข้อสั่งการ",
+            subtitle: "ตั้งแต่ร่างรายงานฉบับสมบูรณ์จนถึงอธิการบดีลงนามข้อสั่งการ",
+            badge: "ภายในสำนักตรวจสอบ ➔ สำนักงานอธิการบดี"
+          },
+          {
+            id: 2,
+            title: "กระบวนการที่ 2: การแจ้งผลและข้อสั่งการแก่หน่วยรับตรวจ",
+            subtitle: "เปิดบันทึกข้อความเรื่องใหม่ ผ่าน ผอ. ลงนามส่งต่อไปยังหน่วยรับตรวจ",
+            badge: "สารบรรณเปิดเรื่องใหม่ ➔ หน่วยรับตรวจ"
+          }
+        ];
+      }
+
+      renderApp();
+    });
+
+    function saveState() {
+      localStorage.setItem('internal_audit_workflow_data', JSON.stringify(workflowData));
+      const ind = document.getElementById('savedIndicator');
+      if (ind) {
+        ind.classList.remove('hidden');
+        setTimeout(() => ind.classList.add('hidden'), 2500);
+      }
+    }
+
+    function syncPhaseOptions() {
+      // 1. Filter Select
+      const phaseFilter = document.getElementById('phaseFilter');
+      const currentFilterVal = phaseFilter.value;
+      phaseFilter.innerHTML = '<option value="ALL">ทุกหมวดหมู่ (แสดงทั้งหมด)</option>';
+      workflowData.phases.forEach((p, idx) => {
+        const opt = document.createElement('option');
+        opt.value = p.id.toString();
+        opt.textContent = `${p.title}`;
+        phaseFilter.appendChild(opt);
+      });
+      if (currentFilterVal && Array.from(phaseFilter.options).some(o => o.value === currentFilterVal)) {
+        phaseFilter.value = currentFilterVal;
+      }
+
+      // 2. Step Form Phase Select
+      const formPhase = document.getElementById('formPhase');
+      formPhase.innerHTML = '';
+      workflowData.phases.forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.id.toString();
+        opt.textContent = p.title;
+        formPhase.appendChild(opt);
+      });
+    }
+
+    function renderApp() {
+      document.getElementById('wfTitle').textContent = workflowData.title;
+      document.getElementById('wfDesc').textContent = workflowData.description;
+
+      syncPhaseOptions();
+
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+      const phaseFilter = document.getElementById('phaseFilter').value;
+
+      const filteredSteps = workflowData.steps.filter(step => {
+        const matchesPhase = (phaseFilter === 'ALL') || (step.phase.toString() === phaseFilter);
+        const matchesSearch = !searchTerm || 
+          step.role.toLowerCase().includes(searchTerm) ||
+          step.title.toLowerCase().includes(searchTerm) ||
+          step.description.toLowerCase().includes(searchTerm) ||
+          (step.doc && step.doc.toLowerCase().includes(searchTerm)) ||
+          (step.security && step.security.toLowerCase().includes(searchTerm));
+        return matchesPhase && matchesSearch;
+      });
+
+      // Render Dynamic Flowchart by Phases
+      const flowchartContainer = document.getElementById('flowchartView');
+      flowchartContainer.innerHTML = '';
+
+      let globalRunningCounter = 1;
+      const visiblePhases = workflowData.phases.filter(p => phaseFilter === 'ALL' || p.id.toString() === phaseFilter);
+
+      visiblePhases.forEach((phase, phaseIndex) => {
+        const colorSet = phaseColors[phaseIndex % phaseColors.length];
+        const stepsInPhase = filteredSteps.filter(s => s.phase === phase.id);
+
+        const phaseSection = document.createElement('section');
+        phaseSection.className = "relative";
+
+        phaseSection.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 bg-white p-3 sm:p-4 rounded-xl border border-slate-200/80 shadow-sm">
+            <div class="flex items-center gap-3">
+              <span class="w-8 h-8 rounded-lg ${colorSet.bg} text-white flex items-center justify-center font-bold text-sm shadow">
+                ${phaseIndex + 1}
+              </span>
+              <div>
+                <h3 class="font-heading font-bold text-base sm:text-lg text-slate-800 leading-snug">
+                  ${escapeHtml(phase.title)}
+                </h3>
+                ${phase.subtitle ? `<p class="text-xs text-slate-500 mt-0.5">${escapeHtml(phase.subtitle)}</p>` : ''}
+              </div>
+            </div>
+
+            <div class="flex items-center flex-wrap gap-2 self-start sm:self-center">
+              ${phase.badge ? `
+                <span class="text-xs font-semibold px-2.5 py-1 ${colorSet.badge} border rounded-full">
+                  ${escapeHtml(phase.badge)}
+                </span>
+              ` : ''}
+
+              <div class="no-print flex items-center gap-1 border-l border-slate-200 pl-2">
+                <button type="button" onclick="openAddModal(${phase.id})" title="เพิ่มขั้นตอนในกระบวนการนี้" 
+                        class="px-2.5 py-1 text-xs font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-md transition flex items-center gap-1">
+                  <i class="fa-solid fa-plus"></i> เพิ่มขั้นตอน
+                </button>
+                <button type="button" onclick="openEditPhaseModal(${phase.id})" title="แก้ไขข้อมูลกระบวนการนี้" 
+                        class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition">
+                  <i class="fa-solid fa-pen-to-square text-xs"></i>
+                </button>
+                <button type="button" onclick="deletePhase(${phase.id})" title="ลบกระบวนการนี้" 
+                        class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div id="phase-list-${phase.id}" class="relative space-y-4 before:absolute before:left-7 sm:before:left-8 before:top-6 before:bottom-6 before:w-0.5 before:bg-slate-200 before:-z-0">
+          </div>
+        `;
+
+        const listContainer = phaseSection.querySelector(`#phase-list-${phase.id}`);
+        if (stepsInPhase.length === 0) {
+          listContainer.innerHTML = `
+            <div class="p-6 text-center text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
+              ยังไม่มีขั้นตอนในกระบวนการนี้ 
+              <button type="button" onclick="openAddModal(${phase.id})" class="text-sky-600 font-medium hover:underline ml-1">
+                + คลิกเพื่อเพิ่มขั้นตอนแรก
+              </button>
+            </div>
+          `;
+        } else {
+          stepsInPhase.forEach(step => {
+            listContainer.appendChild(createStepCardElement(step, globalRunningCounter++));
+          });
+        }
+
+        flowchartContainer.appendChild(phaseSection);
+
+        // Add visual bridge indicator if not the last visible phase
+        if (phaseIndex < visiblePhases.length - 1) {
+          const bridge = document.createElement('div');
+          bridge.className = "flex flex-col items-center justify-center py-1 no-print";
+          bridge.innerHTML = `
+            <div class="w-px h-6 bg-slate-300"></div>
+            <div class="bg-amber-50 border border-amber-300 text-amber-800 px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-sm my-1">
+              <i class="fa-solid fa-arrow-down text-amber-600"></i>
+              ส่งต่อไปยังกระบวนการถัดไป
+            </div>
+            <div class="w-px h-6 bg-slate-300"></div>
+          `;
+          flowchartContainer.appendChild(bridge);
+        }
+      });
+
+      renderTable(filteredSteps);
+    }
+
+    // Modal & Operations for Phases
+    function openAddPhaseModal() {
+      document.getElementById('editPhaseId').value = '';
+      const nextNum = workflowData.phases.length + 1;
+      document.getElementById('formPhaseTitle').value = `กระบวนการที่ ${nextNum}: `;
+      document.getElementById('formPhaseSubtitle').value = '';
+      document.getElementById('formPhaseBadge').value = '';
+      document.getElementById('phaseModalTitle').textContent = 'เพิ่มกระบวนการใหม่';
+      document.getElementById('phaseModal').classList.remove('hidden');
+    }
+
+    function openEditPhaseModal(phaseId) {
+      const phase = workflowData.phases.find(p => p.id === phaseId);
+      if (!phase) return;
+
+      document.getElementById('editPhaseId').value = phase.id;
+      document.getElementById('formPhaseTitle').value = phase.title;
+      document.getElementById('formPhaseSubtitle').value = phase.subtitle || '';
+      document.getElementById('formPhaseBadge').value = phase.badge || '';
+      document.getElementById('phaseModalTitle').textContent = `แก้ไข: ${phase.title}`;
+      document.getElementById('phaseModal').classList.remove('hidden');
+    }
+
+    function closePhaseModal() {
+      document.getElementById('phaseModal').classList.add('hidden');
+    }
+
+    function handleSavePhase(event) {
+      event.preventDefault();
+      const idVal = document.getElementById('editPhaseId').value;
+      const title = document.getElementById('formPhaseTitle').value.trim();
+      const subtitle = document.getElementById('formPhaseSubtitle').value.trim();
+      const badge = document.getElementById('formPhaseBadge').value.trim();
+
+      if (idVal) {
+        const phaseId = parseInt(idVal, 10);
+        const idx = workflowData.phases.findIndex(p => p.id === phaseId);
+        if (idx !== -1) {
+          workflowData.phases[idx] = { ...workflowData.phases[idx], title, subtitle, badge };
+          showToast('แก้ไขข้อมูลกระบวนการเรียบร้อยแล้ว', 'success');
+        }
+      } else {
+        const newId = workflowData.phases.length ? Math.max(...workflowData.phases.map(p => p.id)) + 1 : 1;
+        workflowData.phases.push({ id: newId, title, subtitle, badge });
+        showToast('เพิ่มกระบวนการใหม่สำเร็จแล้ว', 'success');
+      }
+
+      closePhaseModal();
+      saveState();
+      renderApp();
+    }
+
+    function deletePhase(phaseId) {
+      const phase = workflowData.phases.find(p => p.id === phaseId);
+      if (!phase) return;
+
+      const stepsCount = workflowData.steps.filter(s => s.phase === phaseId).length;
+      let confirmMsg = `คุณต้องการลบ "${phase.title}" ใช่หรือไม่?`;
+      if (stepsCount > 0) {
+        confirmMsg = `กระบวนการนี้มีขั้นตอนอยู่ทั้งหมด ${stepsCount} ขั้นตอน หากลบกระบวนการนี้ ขั้นตอนทั้งหมดจะถูกลบไปด้วย คุณแน่ใจหรือไม่?`;
+      }
+
+      const confirmed = window.confirm(confirmMsg);
+      if (confirmed) {
+        workflowData.phases = workflowData.phases.filter(p => p.id !== phaseId);
+        workflowData.steps = workflowData.steps.filter(s => s.phase !== phaseId);
+        saveState();
+        renderApp();
+        showToast('ลบกระบวนการเรียบร้อยแล้ว', 'info');
+      }
+    }
+
+    function createStepCardElement(step, globalNumber) {
+      const theme = themeStyles[step.theme] || themeStyles.sky;
+      const card = document.createElement('div');
+      card.className = "card-step relative pl-14 sm:pl-16 transition-all duration-200";
+
+      const formattedDesc = step.description.split('\n').map(line => `<p class="mt-1">${escapeHtml(line)}</p>`).join('');
+
+      card.innerHTML = `
+        <div class="absolute left-2.5 sm:left-3.5 top-5 -translate-x-1/2 w-9 h-9 rounded-full ${theme.circle} flex items-center justify-center font-bold text-sm shadow-md ring-4 ring-white z-10">
+          ${globalNumber}
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 hover:border-slate-300 shadow-sm hover:shadow-md transition p-5 sm:p-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${theme.badge}">
+                <i class="fa-solid ${step.icon || 'fa-circle-dot'} text-xs"></i> ${escapeHtml(step.role)}
+              </span>
+              <h4 class="font-heading font-bold text-base sm:text-lg text-slate-800 leading-snug">
+                ${escapeHtml(step.title)}
+              </h4>
+            </div>
+
+            <div class="flex items-center gap-2 self-start sm:self-center">
+              ${step.sla ? `
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700">
+                  <i class="fa-regular fa-clock text-slate-400"></i> ${escapeHtml(step.sla)}
+                </span>
+              ` : ''}
+
+              <div class="no-print flex items-center gap-1">
+                <button type="button" onclick="moveStep(${step.id}, 'up')" title="เลื่อนขึ้น" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition">
+                  <i class="fa-solid fa-chevron-up text-xs"></i>
+                </button>
+                <button type="button" onclick="moveStep(${step.id}, 'down')" title="เลื่อนลง" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-md transition">
+                  <i class="fa-solid fa-chevron-down text-xs"></i>
+                </button>
+                <button type="button" onclick="openAddStepAfter(${step.id})" title="เพิ่มขั้นตอนใหม่ต่อท้ายข้อนี้" class="px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-md transition flex items-center gap-1">
+                  <i class="fa-solid fa-plus text-xs"></i>
+                  <span>แทรกต่อ</span>
+                </button>
+                <button type="button" onclick="openEditModal(${step.id})" title="แก้ไขรายละเอียด" class="px-2.5 py-1 text-xs font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-md transition flex items-center gap-1">
+                  <i class="fa-solid fa-pen-to-square"></i> แก้ไข
+                </button>
+                <button type="button" onclick="deleteStep(${step.id})" title="ลบขั้นตอนนี้" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 text-sm text-slate-600 leading-relaxed font-normal">
+            ${formattedDesc}
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-2 text-xs">
+            ${step.doc ? `
+              <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700">
+                <i class="fa-solid fa-file-lines text-slate-400"></i>
+                <span class="font-medium">สิ่งที่แนบ:</span> ${escapeHtml(step.doc)}
+              </div>
+            ` : ''}
+
+            ${step.security ? `
+              <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${step.security.includes('SharePoint') ? 'bg-purple-50 border border-purple-200 text-purple-800 font-medium' : 'bg-slate-50 border border-slate-200 text-slate-700'}">
+                <i class="fa-solid fa-shield-check ${step.security.includes('SharePoint') ? 'text-purple-500' : 'text-slate-400'}"></i>
+                <span class="font-medium">จุดควบคุม:</span> ${escapeHtml(step.security)}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      return card;
+    }
+
+    function renderTable(steps) {
+      const tbody = document.getElementById('sopTableBody');
+      tbody.innerHTML = '';
+
+      if (!steps.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400">ไม่พบขั้นตอนที่ตรงกับคำค้นหา</td></tr>';
+        return;
+      }
+
+      steps.forEach((step, idx) => {
+        const theme = themeStyles[step.theme] || themeStyles.sky;
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50 transition cursor-pointer";
+        tr.onclick = (e) => {
+          if (!e.target.closest('button')) {
+            openEditModal(step.id);
+          }
+        };
+
+        tr.innerHTML = `
+          <td class="px-4 py-3.5 text-center font-bold text-slate-700">${idx + 1}</td>
+          <td class="px-4 py-3.5">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold ${theme.badge}">
+              <i class="fa-solid ${step.icon || 'fa-circle-dot'} text-xs"></i> ${escapeHtml(step.role)}
+            </span>
+          </td>
+          <td class="px-4 py-3.5">
+            <div class="font-semibold text-slate-800 text-sm mb-1">${escapeHtml(step.title)}</div>
+            <div class="text-xs text-slate-500 line-clamp-2">${escapeHtml(step.description)}</div>
+          </td>
+          <td class="px-4 py-3.5 text-xs text-slate-600">
+            <div><span class="font-semibold text-slate-700">เอกสาร:</span> ${escapeHtml(step.doc || '-')}</div>
+            <div class="mt-1"><span class="font-semibold text-slate-700">จุดควบคุม:</span> ${escapeHtml(step.security || '-')}</div>
+          </td>
+          <td class="px-4 py-3.5 text-center text-xs font-medium text-slate-700">${escapeHtml(step.sla || '-')}</td>
+          <td class="px-4 py-3.5 text-center no-print">
+            <button type="button" onclick="openAddStepAfter(${step.id})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition" title="แทรกขั้นตอนต่อท้ายข้อนี้">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+            <button type="button" onclick="openEditModal(${step.id})" class="p-1.5 text-sky-600 hover:bg-sky-50 rounded-md transition ml-1" title="แก้ไข">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button type="button" onclick="deleteStep(${step.id})" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-md transition ml-1" title="ลบ">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openEditModal(id) {
+      const step = workflowData.steps.find(s => s.id === id);
+      if (!step) return;
+
+      document.getElementById('editStepId').value = step.id;
+      document.getElementById('insertAfterId').value = '';
+      document.getElementById('formPhase').value = step.phase;
+      document.getElementById('formRole').value = step.role;
+      document.getElementById('formTitle').value = step.title;
+      document.getElementById('formDesc').value = step.description;
+      document.getElementById('formDoc').value = step.doc || '';
+      document.getElementById('formSecurity').value = step.security || '';
+      document.getElementById('formSLA').value = step.sla || '';
+      document.getElementById('formTheme').value = step.theme || 'sky';
+      document.getElementById('formIcon').value = step.icon || 'fa-file-lines';
+
+      document.getElementById('modalTitle').textContent = `แก้ไขขั้นตอน: ${step.role}`;
+      document.getElementById('stepModal').classList.remove('hidden');
+    }
+
+    function openAddStepAfter(afterId) {
+      const targetStep = workflowData.steps.find(s => s.id === afterId);
+
+      document.getElementById('editStepId').value = '';
+      document.getElementById('insertAfterId').value = afterId ? afterId.toString() : '';
+      document.getElementById('formPhase').value = targetStep ? targetStep.phase.toString() : (workflowData.phases[0]?.id?.toString() || '1');
+      document.getElementById('formRole').value = '';
+      document.getElementById('formTitle').value = '';
+      document.getElementById('formDesc').value = '';
+      document.getElementById('formDoc').value = '';
+      document.getElementById('formSecurity').value = '';
+      document.getElementById('formSLA').value = '1 วันทำการ';
+      document.getElementById('formTheme').value = targetStep ? targetStep.theme : 'sky';
+      document.getElementById('formIcon').value = 'fa-file-lines';
+
+      document.getElementById('modalTitle').textContent = targetStep
+        ? `แทรกขั้นตอนใหม่ต่อท้าย: ${targetStep.role} (${targetStep.title})`
+        : 'เพิ่มขั้นตอนใหม่ในผังกระบวนการ';
+
+      document.getElementById('stepModal').classList.remove('hidden');
+    }
+
+    function openAddModal(preferredPhaseId) {
+      openAddStepAfter(null);
+      if (preferredPhaseId) {
+        document.getElementById('formPhase').value = preferredPhaseId.toString();
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('stepModal').classList.add('hidden');
+    }
+
+    function handleSaveStep(event) {
+      event.preventDefault();
+      const idVal = document.getElementById('editStepId').value;
+      const insertAfterVal = document.getElementById('insertAfterId').value;
+      const phase = parseInt(document.getElementById('formPhase').value, 10);
+      const role = document.getElementById('formRole').value.trim();
+      const title = document.getElementById('formTitle').value.trim();
+      const desc = document.getElementById('formDesc').value.trim();
+      const doc = document.getElementById('formDoc').value.trim();
+      const security = document.getElementById('formSecurity').value.trim();
+      const sla = document.getElementById('formSLA').value.trim();
+      const theme = document.getElementById('formTheme').value;
+      const icon = document.getElementById('formIcon').value;
+
+      if (idVal) {
+        const stepId = parseInt(idVal, 10);
+        const idx = workflowData.steps.findIndex(s => s.id === stepId);
+        if (idx !== -1) {
+          workflowData.steps[idx] = {
+            ...workflowData.steps[idx],
+            phase, role, title, description: desc, doc, security, sla, theme, icon
+          };
+          showToast('บันทึกการแก้ไขขั้นตอนสำเร็จ', 'success');
+        }
+      } else {
+        const newId = workflowData.steps.length ? Math.max(...workflowData.steps.map(s => s.id)) + 1 : 1;
+        const newStep = {
+          id: newId,
+          phase, role, title, description: desc, doc, security, sla, theme, icon
+        };
+
+        if (insertAfterVal) {
+          const targetId = parseInt(insertAfterVal, 10);
+          const targetIndex = workflowData.steps.findIndex(s => s.id === targetId);
+          if (targetIndex !== -1) {
+            // แทรกขั้นตอนใหม่ต่อท้ายขั้นตอนที่เลือกทันที
+            workflowData.steps.splice(targetIndex + 1, 0, newStep);
+          } else {
+            workflowData.steps.push(newStep);
+          }
+        } else {
+          workflowData.steps.push(newStep);
+        }
+
+        showToast('เพิ่มขั้นตอนต่อท้ายเรียบร้อยแล้ว', 'success');
+      }
+
+      closeModal();
+      saveState();
+      renderApp();
+    }
+
+    function deleteStep(id) {
+      const step = workflowData.steps.find(s => s.id === id);
+      if (!step) return;
+
+      const confirmed = window.confirm(`คุณต้องการลบขั้นตอน "${step.title}" (${step.role}) ใช่หรือไม่?`);
+      if (confirmed) {
+        workflowData.steps = workflowData.steps.filter(s => s.id !== id);
+        saveState();
+        renderApp();
+        showToast('ลบขั้นตอนออกจากผังงานแล้ว', 'info');
+      }
+    }
+
+    function moveStep(id, direction) {
+      const idx = workflowData.steps.findIndex(s => s.id === id);
+      if (idx === -1) return;
+
+      if (direction === 'up' && idx > 0) {
+        const temp = workflowData.steps[idx];
+        workflowData.steps[idx] = workflowData.steps[idx - 1];
+        workflowData.steps[idx - 1] = temp;
+      } else if (direction === 'down' && idx < workflowData.steps.length - 1) {
+        const temp = workflowData.steps[idx];
+        workflowData.steps[idx] = workflowData.steps[idx + 1];
+        workflowData.steps[idx + 1] = temp;
+      } else {
+        return;
+      }
+
+      saveState();
+      renderApp();
+    }
+
+    function editWorkflowInfo() {
+      document.getElementById('editWfTitle').value = workflowData.title;
+      document.getElementById('editWfDesc').value = workflowData.description;
+      document.getElementById('headerModal').classList.remove('hidden');
+    }
+
+    function closeHeaderModal() {
+      document.getElementById('headerModal').classList.add('hidden');
+    }
+
+    function saveWorkflowHeader() {
+      workflowData.title = document.getElementById('editWfTitle').value.trim() || workflowData.title;
+      workflowData.description = document.getElementById('editWfDesc').value.trim() || workflowData.description;
+      closeHeaderModal();
+      saveState();
+      renderApp();
+      showToast('ปรับปรุงข้อมูลหัวเรื่องสำเร็จ', 'success');
+    }
+
+    function resetToDefaultData() {
+      const confirmed = window.confirm('คุณต้องการรีเซ็ตข้อมูลทั้งหมดกลับเป็นค่าเริ่มต้นตามเทมเพลตเดิมหรือไม่?');
+      if (confirmed) {
+        workflowData = JSON.parse(JSON.stringify(defaultWorkflowData));
+        localStorage.removeItem('internal_audit_workflow_data');
+        renderApp();
+        showToast('คืนค่าเทมเพลตเริ่มต้นเรียบร้อยแล้ว', 'info');
+      }
+    }
+
+    function toggleViewMode() {
+      isTableView = !isTableView;
+      const flowchart = document.getElementById('flowchartView');
+      const table = document.getElementById('tableView');
+      const btn = document.getElementById('viewToggleBtn');
+
+      if (isTableView) {
+        flowchart.classList.add('hidden');
+        table.classList.remove('hidden');
+        btn.innerHTML = '<i class="fa-solid fa-diagram-project mr-1.5"></i> ดูผังกระบวนการ (Flowchart)';
+      } else {
+        flowchart.classList.remove('hidden');
+        table.classList.add('hidden');
+        btn.innerHTML = '<i class="fa-solid fa-table-list mr-1.5"></i> ดูตารางสรุป SOP';
+      }
+    }
+
+    function toggleExpandAll() {
+      const cards = document.querySelectorAll('.card-step .mt-3, .card-step .mt-4');
+      areAllExpanded = !areAllExpanded;
+      cards.forEach(el => {
+        el.style.display = areAllExpanded ? 'block' : 'none';
+      });
+      document.getElementById('expandBtn').innerHTML = areAllExpanded ? 
+        '<i class="fa-solid fa-arrows-up-down mr-1"></i> ยุบรายละเอียด' : 
+        '<i class="fa-solid fa-arrows-up-down mr-1"></i> ขยายรายละเอียด';
+    }
+
+    function exportUpdatedHTML() {
+      try {
+        const scriptElement = document.getElementById('embedded-data');
+        if (scriptElement) {
+          scriptElement.textContent = '\n    const defaultWorkflowData = ' + JSON.stringify(workflowData, null, 2) + ';\n  ';
+        }
+
+        const fullHtml = '<!DOCTYPE html>\n<html lang="th">\n' + document.documentElement.outerHTML + '\n</html>';
+
+        const blob = new Blob([fullHtml], {
+          type: 'text/html;charset=utf-8'
+        });
+
+        const downloadLink = document.createElement('a');
+        const filename = 'Workflow_InternalAudit_' + new Date().toISOString().slice(0, 10) + '.html';
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = filename;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(downloadLink.href);
+
+        showToast('ส่งออกไฟล์ "' + filename + '" สำเร็จแล้ว!', 'success');
+      } catch (err) {
+        console.error("Export error:", err);
+        showToast('เกิดข้อผิดพลาดในการส่งออกไฟล์', 'error');
+      }
+    }
+
+    function showToast(message, type) {
+      const msgType = type || 'info';
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      const icons = {
+        success: 'fa-circle-check text-emerald-500',
+        info: 'fa-circle-info text-sky-500',
+        error: 'fa-triangle-exclamation text-rose-500'
+      };
+
+      toast.className = "pointer-events-auto flex items-center gap-3 bg-white px-4 py-3 rounded-xl shadow-lg border border-slate-200 text-sm text-slate-800 transform transition-all duration-300 translate-y-4 opacity-0";
+      toast.innerHTML = `
+        <i class="fa-solid ${icons[msgType] || icons.info} text-lg"></i>
+        <span>${escapeHtml(message)}</span>
+      `;
+
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => {
+          if (toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 300);
+      }, 3200);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
