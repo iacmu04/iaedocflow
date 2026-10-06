@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบผังกระบวนการเสนอรายงานผลการตรวจสอบภายใน</title>
+  <title>ระบบผังกระบวนการปฏิบัติงานตรวจสอบภายใน (3 Flow Workflows)</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- Google Fonts: Sarabun & Prompt -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Font Awesome Icons -->
@@ -90,7 +90,7 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-sky-100 text-sky-800">
-              Interactive Workflow
+              Multi-Workflow SOP
             </span>
             <span id="savedIndicator" class="text-xs text-emerald-600 font-medium hidden">
               <i class="fa-solid fa-circle-check"></i> บันทึกแล้ว
@@ -110,9 +110,18 @@
           <i class="fa-solid fa-plus mr-1.5"></i> เพิ่มขั้นตอน
         </button>
 
-        <button type="button" onclick="toggleViewMode()" id="viewToggleBtn" class="inline-flex items-center px-3.5 py-2 text-sm font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
-          <i class="fa-solid fa-table-list mr-1.5"></i> ดูตารางสรุป SOP
-        </button>
+        <!-- Segmented 3-View Switcher -->
+        <div class="inline-flex p-1 bg-slate-100 rounded-lg text-xs font-semibold text-slate-600">
+          <button type="button" onclick="setViewMode('compact')" id="btnViewCompact" class="px-3 py-1.5 rounded-md transition">
+            <i class="fa-solid fa-diagram-project mr-1"></i> ผังย่อ (Diagram)
+          </button>
+          <button type="button" onclick="setViewMode('detailed')" id="btnViewDetailed" class="px-3 py-1.5 rounded-md transition">
+            <i class="fa-solid fa-bars-staggered mr-1"></i> ผังละเอียด
+          </button>
+          <button type="button" onclick="setViewMode('table')" id="btnViewTable" class="px-3 py-1.5 rounded-md transition">
+            <i class="fa-solid fa-table-list mr-1"></i> ตาราง SOP
+          </button>
+        </div>
 
         <button type="button" onclick="window.print()" class="inline-flex items-center px-3.5 py-2 text-sm font-medium rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
           <i class="fa-solid fa-print mr-1.5"></i> พิมพ์ / PDF
@@ -122,46 +131,82 @@
           <i class="fa-solid fa-file-arrow-down mr-1.5 text-base"></i> Export ไฟล์ HTML
         </button>
 
-        <button type="button" onclick="resetToDefaultData()" title="คืนค่าข้อมูลเริ่มต้น" class="p-2 text-slate-400 hover:text-rose-600 transition rounded-lg hover:bg-slate-100">
+        <button type="button" onclick="requestResetToDefaultData()" title="คืนค่าข้อมูลเริ่มต้นของทุกงาน" class="p-2 text-slate-400 hover:text-rose-600 transition rounded-lg hover:bg-slate-100">
           <i class="fa-solid fa-rotate-left"></i>
         </button>
       </div>
     </div>
   </header>
 
+  <div class="bg-white border-b border-slate-200 shadow-xs no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto py-2.5" aria-label="Tabs" id="workflowTabsContainer">
+        <!-- Tab 1 -->
+        <button type="button" onclick="switchWorkflowTab('financial')" id="tab-btn-financial" 
+                class="tab-btn whitespace-nowrap py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition border">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs tab-icon-box">
+            <i class="fa-solid fa-coins"></i>
+          </div>
+          <span>1. งานเสนอรายงานงบการเงิน</span>
+          <span id="tab-count-financial" class="ml-1 px-2 py-0.5 text-xs rounded-full font-medium">9 ขั้นตอน</span>
+        </button>
+
+        <!-- Tab 2 -->
+        <button type="button" onclick="switchWorkflowTab('closing')" id="tab-btn-closing" 
+                class="tab-btn whitespace-nowrap py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition border">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs tab-icon-box">
+            <i class="fa-solid fa-clipboard-check"></i>
+          </div>
+          <span>2. งานเสนอร่างรายงานเพื่อปิดตรวจ</span>
+          <span id="tab-count-closing" class="ml-1 px-2 py-0.5 text-xs rounded-full font-medium">4 ขั้นตอน</span>
+        </button>
+
+        <!-- Tab 3 -->
+        <button type="button" onclick="switchWorkflowTab('clarification')" id="tab-btn-clarification" 
+                class="tab-btn whitespace-nowrap py-2.5 px-4 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition border">
+          <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs tab-icon-box">
+            <i class="fa-solid fa-file-shield"></i>
+          </div>
+          <span>3. งานเสนอรายงานผลการตรวจสอบ/ชี้แจง</span>
+          <span id="tab-count-clarification" class="ml-1 px-2 py-0.5 text-xs rounded-full font-medium">8 ขั้นตอน</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+
   <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-    <!-- Document Info Card -->
-    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white rounded-2xl p-6 sm:p-8 shadow-xl mb-8 relative overflow-hidden">
+    <div id="bannerCard" class="bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white rounded-2xl p-6 sm:p-8 shadow-xl mb-8 relative overflow-hidden transition-all duration-300">
       <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none text-9xl text-white">
-        <i class="fa-solid fa-folder-tree"></i>
+        <i id="bannerBgIcon" class="fa-solid fa-coins"></i>
       </div>
 
       <div class="relative z-10 max-w-4xl">
         <div class="flex items-center gap-2 mb-2 text-sky-400 text-sm font-medium">
-          <i class="fa-solid fa-shield-halved"></i> มาตรฐานกระบวนการปฏิบัติงาน & การควบคุมความมั่นคงปลอดภัยข้อมูล
+          <i class="fa-solid fa-shield-halved"></i> 
+          <span id="bannerCategoryTag">มาตรฐานกระบวนการปฏิบัติงาน & การควบคุมความมั่นคงปลอดภัยข้อมูล</span>
         </div>
         <div class="group flex items-start gap-3">
           <h2 id="wfTitle" class="text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug">
             กระบวนการเสนอรายงานผลการตรวจสอบภายในและการแจ้งข้อสั่งการ
           </h2>
-          <button type="button" onclick="editWorkflowInfo()" class="no-print opacity-60 hover:opacity-100 text-sm bg-white/10 hover:bg-white/20 p-2 rounded-lg transition" title="แก้ไขหัวข้อและคำชี้แจง">
+          <button type="button" onclick="editWorkflowInfo()" class="no-print opacity-60 hover:opacity-100 text-sm bg-white/10 hover:bg-white/20 p-2 rounded-lg transition" title="แก้ไขหัวข้อและคำชี้แจงของงานนี้">
             <i class="fa-solid fa-pen"></i>
           </button>
         </div>
         <p id="wfDesc" class="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
-          ผังขั้นตอนการเสนอรายงานผลการตรวจสอบ ตั้งแต่การร่างรายงาน สอบทาน เสนออธิการบดีสั่งการ และส่งออกหนังสือแจ้งหน่วยรับตรวจ พร้อมแนวปฏิบัติการจำกัดสิทธิ์ไฟล์ความลับผ่านลิงก์ SharePoint แทนการแนบไฟล์เอกสาร
+          ผังขั้นตอนการเสนอรายงาน ตั้งแต่การร่างรายงาน สอบทาน เสนออธิการบดีสั่งการ และส่งออกหนังสือแจ้งหน่วยรับตรวจ
         </p>
 
         <div class="mt-6 flex flex-wrap gap-3 text-xs">
           <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/20 text-sky-200 border border-sky-400/30">
-            <i class="fa-solid fa-link"></i> จุดเปลี่ยนผ่านความปลอดภัย: สารบรรณแนบ SharePoint Link
+            <i class="fa-solid fa-layer-group"></i> <span id="bannerPhaseCount">2 กระบวนการหลัก</span>
           </div>
           <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
-            <i class="fa-solid fa-envelope-open-text"></i> สารบรรณเปิดเรื่องใหม่เพื่อแจ้งผลหน่วยรับตรวจ
+            <i class="fa-solid fa-list-check"></i> <span id="bannerStepCount">ขั้นตอนทั้งหมด</span>
           </div>
           <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
-            <i class="fa-solid fa-clock"></i> SLA รวมทั้งระบบ: กำหนดและแก้ไขได้ทุกขั้นตอน
+            <i class="fa-solid fa-clock"></i> SLA: กำหนดและปรับปรุงได้ทุกขั้นตอน
           </div>
         </div>
       </div>
@@ -170,7 +215,7 @@
     <div class="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm no-print">
       <div class="relative w-full sm:w-80">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-        <input type="text" id="searchInput" oninput="renderApp()" placeholder="ค้นหาบทบาท, ขั้นตอน, หรือคำสำคัญ..." 
+        <input type="text" id="searchInput" oninput="renderApp()" placeholder="ค้นหาบทบาท, ขั้นตอน, หรือคำสำคัญในงานนี้..." 
                class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition">
       </div>
 
@@ -185,11 +230,17 @@
       </div>
     </div>
 
+    <!-- Compact Diagram View (ผังย่อสไตล์ Flowchart) -->
+    <div id="compactDiagramView" class="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+      <!-- Dynamically generated compact diagram -->
+    </div>
+
     <!-- Dynamic Flowchart View by Phases -->
     <div id="flowchartView" class="space-y-10">
       <!-- Dynamically generated phase sections -->
     </div>
 
+    <!-- SOP Table View -->
     <div id="tableView" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
       <div class="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
         <div>
@@ -228,7 +279,7 @@
           </div>
           <div>
             <h3 id="modalTitle" class="font-heading font-bold text-lg text-slate-800">แก้ไขข้อมูลขั้นตอน</h3>
-            <p class="text-xs text-slate-400">ปรับปรุงรายละเอียดเนื้อหา ผู้รับผิดชอบ และ SLA</p>
+            <p class="text-xs text-slate-400">ปรับปรุงรายละเอียดเนื้อหา ผู้รับผิดชอบ และ SLA ในงานปัจจุบัน</p>
           </div>
         </div>
         <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100">
@@ -278,7 +329,7 @@
             <label for="formDoc" class="block text-xs font-semibold text-slate-700 mb-1">
               <i class="fa-solid fa-paperclip text-slate-400 mr-1"></i> เอกสารแนบ / สิ่งที่ส่งมาด้วย
             </label>
-            <input type="text" id="formDoc" placeholder="เช่น บันทึกข้อความ, ร่างรายงานผล" 
+            <input type="text" id="formDoc" placeholder="เช่น บันทึกข้อความ, ไฟล์รายงาน (.pdf)" 
                    class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
           </div>
           <div>
@@ -295,10 +346,10 @@
             <label for="formTheme" class="block text-xs font-semibold text-slate-700 mb-1">โทนสีการแสดงผล</label>
             <select id="formTheme" class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none">
               <option value="sky">Sky (ฟ้า - ผู้ตรวจสอบ / เอกสาร)</option>
-              <option value="amber">Amber (ส้มเหลือง - หัวหน้างานสอบทาน)</option>
+              <option value="amber">Amber (ส้มเหลือง - สอบทาน / สารบรรณ)</option>
               <option value="emerald">Emerald (เขียว - ผู้อำนวยการอนุมัติ)</option>
-              <option value="purple">Purple (ม่วง - งานสารบรรณ/SharePoint)</option>
-              <option value="rose">Rose (แดงชมพู - อธิการบดีสั่งการ)</option>
+              <option value="purple">Purple (ม่วง - สารบรรณ/SharePoint)</option>
+              <option value="rose">Rose (แดงชมพู - สารบรรณเชื่อมโยง / สั่งการ)</option>
               <option value="indigo">Indigo (น้ำเงินคราม - สนง.อธิการบดี)</option>
               <option value="teal">Teal (เขียวหัวเป็ด - หน่วยรับตรวจ)</option>
             </select>
@@ -310,7 +361,7 @@
               <option value="fa-user-check">✔️ หัวหน้างานสอบทาน (fa-user-check)</option>
               <option value="fa-signature">✍️ ผอ. ลงนาม (fa-signature)</option>
               <option value="fa-cloud-arrow-up">☁️ สารบรรณ SharePoint (fa-cloud-arrow-up)</option>
-              <option value="fa-building-columns">🏛️ สำนักงานอธิการบดี (fa-building-columns)</option>
+              <option value="fa-building-columns">🏛️️ สำนักงานอธิการบดี (fa-building-columns)</option>
               <option value="fa-stamp">🔖 อธิการบดีสั่งการ (fa-stamp)</option>
               <option value="fa-envelope-open-text">✉️ แจ้งหน่วยรับตรวจ (fa-envelope-open-text)</option>
               <option value="fa-clipboard-check">📋 ตรวจรับและทำแผน (fa-clipboard-check)</option>
@@ -330,10 +381,11 @@
     </div>
   </div>
 
+  <!-- Header Modal -->
   <div id="headerModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-slate-100">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <h3 class="font-heading font-bold text-lg text-slate-800">แก้ไขข้อมูลหัวเรื่อง Workflow</h3>
+        <h3 class="font-heading font-bold text-lg text-slate-800">แก้ไขข้อมูลหัวเรื่อง Workflow (งานปัจจุบัน)</h3>
         <button type="button" onclick="closeHeaderModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -355,7 +407,7 @@
     </div>
   </div>
 
-  <!-- Phase Modal (เพิ่ม / แก้ไข กระบวนการ) -->
+  <!-- Phase Modal -->
   <div id="phaseModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden overflow-y-auto">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-slate-100">
       <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -365,7 +417,7 @@
           </div>
           <div>
             <h3 id="phaseModalTitle" class="font-heading font-bold text-base text-slate-800">เพิ่มกระบวนการใหม่</h3>
-            <p class="text-xs text-slate-400">สร้างส่วนงานหรือกลุ่มขั้นตอนใหม่ในผังกระบวนการ</p>
+            <p class="text-xs text-slate-400">สร้างส่วนงานหรือกลุ่มขั้นตอนใหม่ในผังของงานปัจจุบัน</p>
           </div>
         </div>
         <button type="button" onclick="closePhaseModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100">
@@ -377,17 +429,17 @@
         <input type="hidden" id="editPhaseId">
         <div>
           <label for="formPhaseTitle" class="block text-xs font-semibold text-slate-700 mb-1">ชื่อกระบวนการ (Process Title) *</label>
-          <input type="text" id="formPhaseTitle" required placeholder="เช่น กระบวนการที่ 3: การติดตามผลการแก้ไข (Follow-up)" 
+          <input type="text" id="formPhaseTitle" required placeholder="เช่น กระบวนการที่ 3: การติดตามผลการแก้ไข" 
                  class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
         </div>
         <div>
           <label for="formPhaseSubtitle" class="block text-xs font-semibold text-slate-700 mb-1">คำอธิบายย่อย (Subtitle)</label>
-          <input type="text" id="formPhaseSubtitle" placeholder="เช่น ติดตามการปฏิบัติตามข้อเสนอแนะและรายงานผลรอบ 3-6 เดือน" 
+          <input type="text" id="formPhaseSubtitle" placeholder="เช่น ติดตามการปฏิบัติตามข้อเสนอแนะ" 
                  class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
         </div>
         <div>
           <label for="formPhaseBadge" class="block text-xs font-semibold text-slate-700 mb-1">ป้ายกำกับเส้นทาง / ขอบเขต (Badge)</label>
-          <input type="text" id="formPhaseBadge" placeholder="เช่น หน่วยรับตรวจ ➔ หน่วยตรวจสอบภายใน" 
+          <input type="text" id="formPhaseBadge" placeholder="เช่น ภายในสำนักตรวจสอบ ➔ หน่วยรับตรวจ" 
                  class="w-full text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
         </div>
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
@@ -400,153 +452,371 @@
     </div>
   </div>
 
+  <!-- Custom Confirm Modal -->
+  <div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+          <h3 id="confirmModalTitle" class="font-heading font-bold text-base text-slate-800">ยืนยันการทำรายการ</h3>
+          <p class="text-xs text-slate-400">กรุณาตรวจสอบก่อนยืนยัน</p>
+        </div>
+      </div>
+      <p id="confirmModalMessage" class="text-sm text-slate-600 leading-relaxed my-3"></p>
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+        <button type="button" id="confirmCancelBtn" class="px-4 py-2 text-sm text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition">ยกเลิก</button>
+        <button type="button" id="confirmOkBtn" class="px-5 py-2 text-sm text-white bg-rose-600 hover:bg-rose-700 rounded-lg font-medium shadow-sm transition">ยืนยัน</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notification Container -->
   <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- Footer -->
   <footer class="mt-auto py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-400 no-print">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-      <p>© มาตรฐานคู่มือการปฏิบัติงาน หน่วยตรวจสอบภายใน (Internal Audit SOP Flowchart)</p>
+      <p>© ระบบผังกระบวนการปฏิบัติงาน หน่วยตรวจสอบภายใน (Internal Audit Multi-Flow SOP)</p>
       <div class="flex items-center gap-4">
-        <span>สามารถ Export ไฟล์ HTML เพื่อส่งต่อหรือใช้งานออฟไลน์ได้ 100%</span>
+        <span>รองรับ 3 สายงานหลักในระบบเดียว • Export HTML เก็บข้อมูลครบ 100%</span>
       </div>
     </div>
   </footer>
 
   <script id="embedded-data">
-    const defaultWorkflowData = {
-      title: "กระบวนการเสนอรายงานผลการตรวจสอบภายในและการแจ้งข้อสั่งการ",
-      description: "ผังขั้นตอนการเสนอรายงานผลการตรวจสอบ ตั้งแต่การร่างรายงาน สอบทาน เสนออธิการบดีสั่งการ และส่งออกหนังสือแจ้งหน่วยรับตรวจ พร้อมแนวปฏิบัติการจำกัดสิทธิ์ไฟล์ความลับผ่านลิงก์ SharePoint แทนการแนบไฟล์เอกสาร",
-      phases: [
-        {
-          id: 1,
-          title: "กระบวนการที่ 1: การเสนอรายงานผลการตรวจสอบและขออนุมัติข้อสั่งการ",
-          subtitle: "ตั้งแต่ร่างรายงานฉบับสมบูรณ์จนถึงอธิการบดีลงนามข้อสั่งการ",
-          badge: "ภายในสำนักตรวจสอบ ➔ สำนักงานอธิการบดี"
-        },
-        {
-          id: 2,
-          title: "กระบวนการที่ 2: การแจ้งผลและข้อสั่งการแก่หน่วยรับตรวจ",
-          subtitle: "เปิดบันทึกข้อความเรื่องใหม่ ผ่าน ผอ. ลงนามส่งต่อไปยังหน่วยรับตรวจ",
-          badge: "สารบรรณเปิดเรื่องใหม่ ➔ หน่วยรับตรวจ"
-        }
-      ],
-      steps: [
-        {
-          id: 1,
-          phase: 1,
-          role: "ผู้ตรวจสอบ",
-          title: "ร่างเรื่องและเสนอรายงานผลการตรวจสอบ",
-          description: "ผู้ตรวจสอบจัดทำร่างบันทึกข้อความ แนบไฟล์รายงานผลการตรวจสอบฉบับสมบูรณ์ (Draft Report) เสนอหัวหน้างานพิจารณาผ่านระบบสารบรรณอิเล็กทรอนิกส์ (e-Doc)",
-          doc: "บันทึกข้อความเสนอเรื่อง + ไฟล์รายงานผล (.pdf / .docx)",
-          security: "ตรวจสอบความเรียบร้อยของหลักฐานประกอบ",
-          sla: "1 วันทำการ",
-          theme: "sky",
-          icon: "fa-file-lines"
-        },
-        {
-          id: 2,
-          phase: 1,
-          role: "หัวหน้างาน",
-          title: "สอบทานรายงานผลการตรวจสอบ",
-          description: "หัวหน้างานพิจารณาสอบทานความถูกต้อง ความสมบูรณ์ของเนื้อหา ข้อสังเกต และข้อเสนอแนะ หากเห็นชอบให้เสนอต่อไปยัง ผอ. (หากต้องปรับปรุงให้ส่งกลับผู้ตรวจสอบแก้ไข)",
-          doc: "บันทึกความเห็นชอบของหัวหน้างาน",
-          security: "จุด Double-check ตรวจสอบคุณภาพและความถูกต้อง",
-          sla: "1-2 วันทำการ",
-          theme: "amber",
-          icon: "fa-user-check"
-        },
-        {
-          id: 3,
-          phase: 1,
-          role: "ผู้อำนวยการ (ผอ.)",
-          title: "พิจารณาและลงนามเสนอเรื่อง",
-          description: "ผู้อำนวยการพิจารณาความสมบูรณ์และแนวทางเชิงนโยบาย ลงนามดิจิทัล (Digital Signature) และส่งเรื่องต่อไปยังงานสารบรรณเพื่อดำเนินการส่งออก",
-          doc: "รายงานผลฉบับที่ ผอ. ลงนามแล้ว",
-          security: "ลงนามอนุมัติเสนอเรื่องระดับหน่วยงาน",
-          sla: "1-2 วันทำการ",
-          theme: "emerald",
-          icon: "fa-signature"
-        },
-        {
-          id: 4,
-          phase: 1,
-          role: "งานสารบรรณ",
-          title: "ลงเลขที่/วันที่ & แปลงเป็น SharePoint Link เพื่อจำกัดสิทธิ์",
-          description: "1. นำไฟล์รายงานผลที่ ผอ. ลงนามแล้ว อัปโหลดขึ้นระบบ SharePoint ประจำสำนัก\n2. กำหนดสิทธิ์การเข้าถึงแบบจำกัดบุคคล (Specific People: อธิการบดี/จนท.สนง.อธิการบดี) และตั้งสิทธิ์ View Only\n3. แนบ SharePoint Link ลงในบันทึกข้อความแทนไฟล์แนบเดิม เพื่อป้องกันไฟล์รั่วไหล\n4. ลงเลขที่หนังสือและลงวันที่ส่งในระบบ e-Doc",
-          doc: "ทะเบียนคุมเลขหนังสือส่ง + ลิงก์ SharePoint กำหนดสิทธิ์",
-          security: "จุดเปลี่ยนความปลอดภัยข้อมูล: ห้ามส่งไฟล์แนบตรงๆ",
-          sla: "0.5 - 1 วันทำการ",
-          theme: "purple",
-          icon: "fa-cloud-arrow-up"
-        },
-        {
-          id: 5,
-          phase: 1,
-          role: "สำนักงานอธิการบดี",
-          title: "ตรวจรับเอกสารและจัดแฟ้มเสนอ",
-          description: "สำนักงานอธิการบดีตรวจรับหนังสือเข้าทางระบบ e-Doc ตรวจสอบความถูกต้องและทดสอบเปิดอ่าน SharePoint Link จากนั้นนำขึ้นเสนอต่ออธิการบดีตามวาระ",
-          doc: "บันทึกเสนอแฟ้มของ สนง.อธิการบดี",
-          security: "ประสานงานสารบรรณทันทีหากติดปัญหา Permission",
-          sla: "1-2 วันทำการ",
-          theme: "indigo",
-          icon: "fa-building-columns"
-        },
-        {
-          id: 6,
-          phase: 1,
-          role: "อธิการบดี",
-          title: "พิจารณาเห็นชอบและมีข้อสั่งการ",
-          description: "อธิการบดีพิจารณารายงานผลการตรวจสอบ ลงนามเห็นชอบ และบันทึกข้อสั่งการ/มอบหมายงานให้หน่วยรับตรวจถือปฏิบัติหรือแก้ไขปรับปรุง",
-          doc: "บันทึกข้อสั่งการของอธิการบดี",
-          security: "สิ้นสุดกระบวนการที่ 1 เสนอเรื่อง",
-          sla: "3-5 วันทำการ",
-          theme: "rose",
-          icon: "fa-stamp"
-        },
-        {
-          id: 7,
-          phase: 2,
-          role: "งานสารบรรณ",
-          title: "ตรวจรับหนังสือกลับ & สร้างเรื่องใหม่อีก 1 เรื่อง",
-          description: "เมื่องานสารบรรณตรวจรับหนังสือที่ส่งกลับมาจากสำนักงานอธิการบดีพร้อมข้อสั่งการแล้ว ให้ 'เปิดเรื่องใหม่' เพื่อแจ้งผลการตรวจสอบและข้อสั่งการไปยังหน่วยรับตรวจ โดยอ้างถึงเลขหนังสือเดิม แนบข้อสั่งการ และแนบลิงก์ SharePoint ที่กำหนดสิทธิ์สำหรับหน่วยรับตรวจ",
-          doc: "บันทึกแจ้งผลเรื่องใหม่ + สำเนาข้อสั่งการ + ลิงก์รายงาน",
-          security: "แยกเรื่องใหม่เพื่อความชัดเจนในการติดตามผล (Follow-up)",
-          sla: "0.5 วันทำการ",
-          theme: "purple",
-          icon: "fa-envelope-open-text"
-        },
-        {
-          id: 8,
-          phase: 2,
-          role: "ผู้อำนวยการ (ผอ.)",
-          title: "พิจารณาและลงนามส่งออกแจ้งหน่วยรับตรวจ",
-          description: "ผู้อำนวยการพิจารณาตรวจสอบความถูกต้องของบันทึกข้อความแจ้งผลเรื่องใหม่ และลงนามส่งออกถึงหัวหน้าหน่วยรับตรวจ เพื่อดำเนินการตามข้อสั่งการต่อไป",
-          doc: "บันทึกข้อความส่งออกฉบับสมบูรณ์",
-          security: "ตรวจสอบความถูกต้องของหน่วยงานผู้รับ",
-          sla: "1 วันทำการ",
-          theme: "emerald",
-          icon: "fa-signature"
-        },
-        {
-          id: 9,
-          phase: 2,
-          role: "หน่วยรับตรวจ (Auditee)",
-          title: "รับทราบผลการตรวจสอบและดำเนินการตามข้อสั่งการ",
-          description: "หน่วยรับตรวจตรวจรับหนังสือผ่านระบบ e-Doc และเปิดอ่านรายงานผลผ่าน SharePoint Link พร้อมจัดทำแผนปรับปรุงแก้ไข (Action Plan) ส่งกลับตามกรอบเวลาที่ระบุในข้อสั่งการ",
-          doc: "แผนปรับปรุงแก้ไขตามข้อเสนอแนะ (Action Plan)",
-          security: "นำเข้าสู่ระบบติดตามผลการตรวจสอบ (Audit Follow-up)",
-          sla: "ตามที่สั่งการ (เช่น 30 วัน)",
-          theme: "teal",
-          icon: "fa-clipboard-check"
-        }
-      ]
+    const defaultMultiWorkflowData = {
+      // 1. งานเสนอรายงานงบการเงิน
+      financial: {
+        id: "financial",
+        tabTitle: "งานเสนอรายงานงบการเงิน",
+        tag: "งานสอบทานและเสนอรายงานงบการเงิน",
+        icon: "fa-coins",
+        title: "กระบวนการเสนอรายงานงบการเงินและการแจ้งข้อสั่งการ",
+        description: "ผังขั้นตอนการเสนอรายงานงบการเงิน ตั้งแต่การร่างบันทึกเสนอรายงาน สอบทาน เสนออธิการบดีสั่งการ และเปิดเรื่องใหม่เพื่อส่งออกหนังสือแจ้งผลการสอบทานไปยังหน่วยรับตรวจ",
+        phases: [
+          {
+            id: 1,
+            title: "กระบวนการที่ 1: การเสนอรายงานงบการเงิน",
+            subtitle: "ตั้งแต่ร่างรายงานฉบับสมบูรณ์จนถึงอธิการบดีลงนามข้อสั่งการ",
+            badge: "ภายในสำนักตรวจสอบ ➔ สำนักงานอธิการบดี"
+          },
+          {
+            id: 2,
+            title: "กระบวนการที่ 2: การแจ้งผลการสอบทานงบการเงิน",
+            subtitle: "เปิดบันทึกข้อความเรื่องใหม่ ผ่าน ผอ. ลงนามส่งต่อไปยังหน่วยรับตรวจ",
+            badge: "สารบรรณเปิดเรื่องใหม่ ➔ หน่วยรับตรวจ"
+          }
+        ],
+        steps: [
+          {
+            id: 1,
+            phase: 1,
+            role: "ผู้ตรวจสอบ",
+            title: "ร่างเรื่องและเสนอรายงานผลการตรวจสอบ",
+            description: "ผู้ตรวจสอบจัดทำร่างบันทึกข้อความ แนบไฟล์รายงานผลการตรวจสอบฉบับสมบูรณ์ (Draft Report) เสนอหัวหน้างานพิจารณาผ่านระบบสารบรรณอิเล็กทรอนิกส์ (e-Doc) ยังไม่ใส่เลขหนังสือ",
+            doc: "บันทึกข้อความเสนอเรื่อง + ไฟล์รายงานงบเดือนและเอกสารประกอบ (.pdf / .docx)",
+            security: "ตรวจสอบความเรียบร้อยของหลักฐานประกอบ",
+            sla: "1 วันทำการ",
+            theme: "sky",
+            icon: "fa-file-lines"
+          },
+          {
+            id: 2,
+            phase: 1,
+            role: "หัวหน้างาน",
+            title: "สอบทานรายงานผลการตรวจสอบ",
+            description: "หัวหน้างานพิจารณาสอบทานความถูกต้อง ความสมบูรณ์ของเนื้อหา ข้อสังเกต และข้อเสนอแนะ หากเห็นชอบให้เสนอต่อไปยัง ผอ. (หากต้องปรับปรุงให้ส่งกลับผู้ตรวจสอบแก้ไข)",
+            doc: "บันทึกความเห็นชอบของหัวหน้างาน",
+            security: "จุด Double-check ตรวจสอบคุณภาพและความถูกต้อง",
+            sla: "1-2 วันทำการ",
+            theme: "sky",
+            icon: "fa-user-check"
+          },
+          {
+            id: 3,
+            phase: 1,
+            role: "ผู้อำนวยการ (ผอ.)",
+            title: "พิจารณาและสั่งการ (ลงนามด้วยรูปภาพตั้งแต่ผู้ตรวจสอบ)",
+            description: "ผู้อำนวยการพิจารณาความสมบูรณ์และแนวทางเชิงนโยบาย ลงนามดิจิทัล (Digital Signature) และส่งเรื่องต่อไปยังงานสารบรรณเพื่อดำเนินการส่งออก",
+            doc: "รายงานผลฉบับที่ ผอ. ลงนามแล้ว",
+            security: "ลงนามอนุมัติเสนอเรื่องระดับหน่วยงาน",
+            sla: "1-2 วันทำการ",
+            theme: "emerald",
+            icon: "fa-signature"
+          },
+          {
+            id: 4,
+            phase: 1,
+            role: "งานสารบรรณ",
+            title: "ลงเลขที่/วันที่ & จัดเตรียมความปลอดภัย",
+            description: "1. ดาวน์โหลดออกมาเพื่อใส่เลข\n2. กดออกเลขและนำใส่ในบันทึกข้อความไฟล์ PDF พร้อมวันที่ และล็อคไฟล์ไม่ให้แก้ไขไฟล์ PDF ได้ แต่ทุกคนเปิดได้\n3. ลบไฟล์แนบเดิมออก แล้วอัปโหลดไฟล์ที่แก้ไขใหม่เข้าไปแทน\n4. เพิ่มผู้ตรวจสอบสั่งการ \"เลขาอธิการบดี\" และ \"อธิการบดี\" และ \"จารุณี\"\n5. จารุณี พิมพ์สั่งการ \"ตรวจสอบเรียบร้อย เพื่อโปรดพิจารณา\" เพื่อกดส่งหนังสือไปหาเลขาอธิการบดี\n6. อธิการบดีสั่งการ เรื่องส่งกลับมายัง จารุณี",
+            doc: "ทะเบียนคุมเลขหนังสือส่ง",
+            security: "จุดเปลี่ยนความปลอดภัยข้อมูล: ห้ามส่งไฟล์แนบตรงๆ",
+            sla: "0.5 - 1 วันทำการ",
+            theme: "amber",
+            icon: "fa-cloud-arrow-up"
+          },
+          {
+            id: 7,
+            phase: 2,
+            role: "งานสารบรรณ",
+            title: "ตรวจรับหนังสือกลับ & สร้างเรื่องใหม่อีก 1 เรื่อง",
+            description: "1. จารุณี สร้างหนังสือใหม่ เพื่อแจ้งผลการสอบทานงบการเงินฯ ไปยังหน่วยรับตรวจ โดยอ้างถึงเลขหนังสือเดิม ไม่มีเอกสารแนบใดๆ เพราะให้ไปอ่านที่หนังสือเดิมที่อ้างถึง\n2. กำหนดตรวจสอบสั่งการ เพิ่มชื่อ \"ผู้อำนวยการสำนักงานการตรวจสอบภายใน\" เพื่อสั่งการ และ \"จารุณี\" เพื่อดำเนินการต่อ\n3. กดส่ง",
+            doc: "บันทึกแจ้งผลเรื่องใหม่",
+            security: "แยกเรื่องใหม่เพื่อความชัดเจนในการติดตามผล (Follow-up)",
+            sla: "0.5 วันทำการ",
+            theme: "purple",
+            icon: "fa-envelope-open-text"
+          },
+          {
+            id: 8,
+            phase: 2,
+            role: "ผู้อำนวยการ (ผอ.)",
+            title: "พิจารณาและสั่งการ",
+            description: "ผู้อำนวยการพิจารณาสั่งการให้ส่งออกถึงหัวหน้าหน่วยรับตรวจ",
+            doc: "บันทึกข้อความส่งออกฉบับสมบูรณ์",
+            security: "ตรวจสอบความถูกต้องของหน่วยงานผู้รับ",
+            sla: "1 วันทำการ",
+            theme: "emerald",
+            icon: "fa-signature"
+          },
+          {
+            id: 10,
+            phase: 2,
+            role: "งานสารบรรณ",
+            title: "ส่งหนังสืออกไปยังหน่วยรับตรวจ",
+            description: "1. ข้อสั่งการผอ. ส่งกลับมาหาจารุณี จารุณี พิมพ์ \"ทราบ ดำเนินการนำส่งหนังสือไปยัง...\"\n2. จารุณี กดออกเลข (ทั่วไปของตรวจสอบภายใน) และกดเสร็จสิ้น\n3. กดส่งหนังสือไปยังหน่วยรับตรวจ",
+            doc: "-",
+            security: "-",
+            sla: "1 วันทำการ",
+            theme: "emerald",
+            icon: "fa-file-lines"
+          },
+          {
+            id: 9,
+            phase: 2,
+            role: "หน่วยรับตรวจ (Auditee)",
+            title: "รับทราบผลการตรวจสอบและดำเนินการตามข้อสั่งการ",
+            description: "หน่วยรับตรวจตรวจรับหนังสือผ่านระบบ e-Doc และเปิดอ่านรายงาน และรับทราบ",
+            doc: "-",
+            security: "นำเข้าสู่ระบบติดตามผลการตรวจสอบ (Audit Follow-up)",
+            sla: "ตามที่สั่งการ (เช่น 30 วัน)",
+            theme: "teal",
+            icon: "fa-clipboard-check"
+          },
+          {
+            id: 11,
+            phase: 2,
+            role: "งานสารบรรณ",
+            title: "การเชื่อมโยงหนังสือภายในและหนังสือที่ส่งออกไปหน่วยรับตรวจ",
+            description: "1 จารุณี กลับไปพิมพ์ในช่องตรวจสอบสั่งการ ของหนังสือ รง. (ในกระบวนการที่ 1) เพื่อบันทึกการเชื่อมโยงของหนังสือและจัดทำ Link เชื่อมโยงไว้เป็นข้อมูล \"ทราบ ดำเนินการส่ง... ตามหนังสือ ... (Link ที่ส่งไปหน่วยรับตรวจ) ต่อไป\"",
+            doc: "-",
+            security: "-",
+            sla: "1 วันทำการ",
+            theme: "rose",
+            icon: "fa-file-lines"
+          }
+        ]
+      },
+
+      // 2. งานเสนอร่างรายงานเพื่อปิดตรวจ
+      closing: {
+        id: "closing",
+        tabTitle: "งานเสนอร่างรายงานเพื่อปิดตรวจ",
+        tag: "งานสรุปผลและปิดการตรวจ",
+        icon: "fa-clipboard-check",
+        title: "กระบวนการเสนอร่างรายงานผลการตรวจสอบเพื่อปิดตรวจ",
+        description: "ผังขั้นตอนการสรุปปิดตรวจ การจัดทำร่างรายงานฉบับสมบูรณ์และแบบฟอร์มปิดตรวจ เสนอหัวหน้างานและ ผอ. พิจารณา ก่อนที่งานสารบรรณจะออกเลข แปลงไฟล์เป็น SharePoint และส่งออกไปยังหน่วยรับตรวจ",
+        phases: [
+          {
+            id: 1,
+            title: "กระบวนการที่ 1: สรุปปิดตรวจ",
+            subtitle: "ร่างรายงานเพื่อส่งไปยังหน่วยรับตรวจ",
+            badge: "ภายในสำนักตรวจสอบ ➔ หน่วยรับตรวจ"
+          }
+        ],
+        steps: [
+          {
+            id: 1,
+            phase: 1,
+            role: "ผู้ตรวจสอบ",
+            title: "สร้างเรื่องและแนบไฟล์ร่างรายงาน",
+            description: "ผู้ตรวจสอบจัดทำร่างบันทึกข้อความ แนบไฟล์ (ร่าง) รายงานผลการตรวจสอบฉบับสมบูรณ์ (Draft Report) และแบบฟอร์มสรุปปิดตรวจ เสนอหัวหน้างานพิจารณาผ่านระบบสารบรรณอิเล็กทรอนิกส์ (e-Doc) ยังไม่ใส่เลขหนังสือ\n- ผู้ตรวจสอบระบุเส้นทาง \"หัวหน้างาน\" \"ผอ.\" \"จารุณี\"",
+            doc: "ไฟล์ร่างรายงาน (.pdf / .docx) + แบบฟอร์มสรุปปิดตรวจ",
+            security: "ตรวจสอบความเรียบร้อยของหลักฐานประกอบ",
+            sla: "1 วันทำการ",
+            theme: "sky",
+            icon: "fa-file-lines"
+          },
+          {
+            id: 2,
+            phase: 1,
+            role: "หัวหน้างาน",
+            title: "สอบทาน (ร่าง) รายงานผลการตรวจสอบ",
+            description: "หัวหน้างานพิจารณาสอบทานความถูกต้อง ความสมบูรณ์ของเนื้อหา ข้อสังเกต และข้อเสนอแนะ หากเห็นชอบให้เสนอต่อไปยัง ผอ. (หากต้องปรับปรุงให้ส่งกลับผู้ตรวจสอบแก้ไข)",
+            doc: "บันทึกความเห็นชอบของหัวหน้างาน",
+            security: "จุด Double-check ตรวจสอบคุณภาพและความถูกต้อง",
+            sla: "1-2 วันทำการ",
+            theme: "sky",
+            icon: "fa-user-check"
+          },
+          {
+            id: 3,
+            phase: 1,
+            role: "ผู้อำนวยการ (ผอ.)",
+            title: "พิจารณาและสั่งการ (ลงนามด้วยรูปภาพตั้งแต่ผู้ตรวจสอบ)",
+            description: "ผู้อำนวยการพิจารณาความสมบูรณ์และแนวทางเชิงนโยบาย (ผู้ตรวจสอบใส่ลายเซ็นผอ.ตั้งแต่สร้างเรื่อง) และส่งเรื่องต่อไปยังงานสารบรรณเพื่อดำเนินการส่งออก",
+            doc: "รายงานผลฉบับที่ ผอ. ลงนามแล้ว",
+            security: "ลงนามอนุมัติเสนอเรื่องระดับหน่วยงาน",
+            sla: "1-2 วันทำการ",
+            theme: "emerald",
+            icon: "fa-signature"
+          },
+          {
+            id: 4,
+            phase: 1,
+            role: "งานสารบรรณ",
+            title: "ลงเลขที่/วันที่ & นำขึ้น SharePoint ส่งหน่วยรับตรวจ",
+            description: "1. จารุณี กดออกเลขทั่วไป (เลขตรวจสอบภายใน)\n2. จารุณี ดาวน์โหลดไฟล์ \"ร่างรายงาน\"\n3. จารุณี นำร่างรายงานไปใส่ Sharepoint และสร้าง Link\n4 นำ Link Sharepoint มาใส่ในขั้นตอนที่ 2 (เนื้อหาใน e-Doc ที่ตั้งเรื่องมาจากผู้ตรวจสอบ) กดบันทึก\n5. จารุณี ลบไฟล์แนบ \"ร่างรายงาน\" ส่วนไฟล์แบบฟอร์มฯ ยังเป็นเอกสารแนบเหมือนเดิม\n6. จารุณี พิมพ์ใน ตรวจสอบ/สั่งการ \"ทราบ ดำเนินการส่งหนังสือไปยัง ... เพื่อดำเนินการต่อไป\"\n7. จารุณี กดเสร็จสิ้น เอกสาร และกดส่งไปยังหน่วยรับตรวจ",
+            doc: "แบบฟอร์มสรุปปิดตรวจ",
+            security: "แปลงไฟล์ร่างรายงานเป็น SharePoint Link",
+            sla: "0.5 - 1 วันทำการ",
+            theme: "rose",
+            icon: "fa-cloud-arrow-up"
+          }
+        ]
+      },
+
+      // 3. งานเสนอรายงานผลการตรวจสอบ/ชี้แจง
+      clarification: {
+        id: "clarification",
+        tabTitle: "งานเสนอรายงานผลการตรวจสอบ/ชี้แจง",
+        tag: "งานรายงานผลการตรวจสอบและหนังสือชี้แจง",
+        icon: "fa-file-shield",
+        title: "กระบวนการเสนอรายงานผลการตรวจสอบ/ชี้แจง และการแจ้งข้อสั่งการ",
+        description: "ผังขั้นตอนการเสนอรายงานผลการตรวจสอบ/ชี้แจง เสนออธิการบดีเพื่อพิจารณาสั่งการ และการเปิดเรื่องใหม่เพื่อแจ้งผลไปยังหน่วยรับตรวจ พร้อมแนวปฏิบัติการจำกัดสิทธิ์ไฟล์ผ่าน SharePoint",
+        phases: [
+          {
+            id: 1,
+            title: "กระบวนการที่ 1: เสนอรายงานผลการตรวจสอบ/ชี้แจง",
+            subtitle: "ส่งรายงานเสนออธิการและไปยังหน่วยรับตรวจ",
+            badge: "ภายในสำนักตรวจสอบ ➔ อธิการบดี ➔ หน่วยรับตรวจ"
+          },
+          {
+            id: 2,
+            title: "กระบวนการที่ 2: แจ้งรายงาน/ชี้แจงไปยังหน่วยรับตรวจ",
+            subtitle: "ส่งรายงาน/ชี้แจงไปยังหน่วยรับตรวจ",
+            badge: "ภายในสำนักตรวจสอบ ➔ หน่วยรับตรวจ"
+          }
+        ],
+        steps: [
+          {
+            id: 1,
+            phase: 1,
+            role: "ผู้ตรวจสอบ",
+            title: "สร้างเรื่องและแนบไฟล์ร่างรายงาน",
+            description: "ผู้ตรวจสอบสร้างเรื่องใหม่ แนบไฟล์รายงานผลการตรวจสอบฉบับสมบูรณ์ (Report) / ชี้แจง เสนอหัวหน้างานพิจารณาผ่านระบบสารบรรณอิเล็กทรอนิกส์ (e-Doc) ยังไม่ใส่เลขหนังสือ\n- ผู้ตรวจสอบระบุเส้นทาง \"หัวหน้างาน\" \"ผอ.\" \"จารุณี\"",
+            doc: "ไฟล์รายงาน/ชี้แจง (.pdf)",
+            security: "ตรวจสอบความเรียบร้อยของหลักฐานประกอบ",
+            sla: "1 วันทำการ",
+            theme: "sky",
+            icon: "fa-file-lines"
+          },
+          {
+            id: 2,
+            phase: 1,
+            role: "หัวหน้างาน",
+            title: "สอบทาน (ร่าง) รายงานผลการตรวจสอบ",
+            description: "หัวหน้างานพิจารณาสอบทานความถูกต้อง ความสมบูรณ์ของเนื้อหา ข้อสังเกต และข้อเสนอแนะ หากเห็นชอบให้เสนอต่อไปยัง ผอ. (หากต้องปรับปรุงให้ส่งกลับผู้ตรวจสอบแก้ไข)",
+            doc: "บันทึกความเห็นชอบของหัวหน้างาน",
+            security: "จุด Double-check ตรวจสอบคุณภาพและความถูกต้อง",
+            sla: "1-2 วันทำการ",
+            theme: "sky",
+            icon: "fa-user-check"
+          },
+          {
+            id: 3,
+            phase: 1,
+            role: "ผู้อำนวยการ (ผอ.)",
+            title: "พิจารณาและสั่งการ (ลงนามด้วยรูปภาพตั้งแต่ผู้ตรวจสอบ)",
+            description: "ผู้อำนวยการพิจารณาความสมบูรณ์และแนวทางเชิงนโยบาย (ผู้ตรวจสอบใส่ลายเซ็นผอ.ตั้งแต่สร้างเรื่อง) และส่งเรื่องต่อไปยังงานสารบรรณเพื่อดำเนินการส่งออก",
+            doc: "รายงานผลฉบับที่ ผอ. ลงนามแล้ว",
+            security: "ลงนามอนุมัติเสนอเรื่องระดับหน่วยงาน",
+            sla: "1-2 วันทำการ",
+            theme: "emerald",
+            icon: "fa-signature"
+          },
+          {
+            id: 4,
+            phase: 1,
+            role: "งานสารบรรณ",
+            title: "ลงเลขที่/วันที่ & แปลงเป็น SharePoint Link",
+            description: "1. จารุณี กดออกเลข \"รป.\" (เลขตรวจสอบภายใน)\n2. จารุณี ดาวน์โหลดไฟล์ \"รายงาน\" / \"ชี้แจง\n3. จารุณี นำรายงานไปใส่ Sharepoint และสร้าง Link และกำหนดผู้มีสิทธิ์เข้าถึงไฟล์\n4 นำ Link Sharepoint มาใส่ในขั้นตอนที่ 2 (เนื้อหาใน e-Doc ที่ตั้งเรื่องมาจากผู้ตรวจสอบ) กดบันทึก\n5. จารุณี ลบไฟล์แนบ \"รายงาน\" / \"ชี้แจง\n6. จารุณี เพิ่มชื่อผู้ตรวจสอบสั่งการ \"เลขาอธิการบดี\" และ \"อธิการบดี\" และ \"จารุณี\"\n7. จารุณี พิมพ์ใน ตรวจสอบ/สั่งการ \"ตรวจสอบเรียบร้อยแล้ว เพื่อโปรดพิจารณา\"\n8. จารุณี กดส่งไปยังอธิการบดี",
+            doc: "ไม่มีเอกสารแนบ (ใช้ SharePoint Link)",
+            security: "ไม่สามารถใส่ Link ในขั้นตอนที่ 2 ได้ เอกสารแนบสามารถได้แค่ 10MB เอกสารลับมีแค่คนรับถึงส่งได้",
+            sla: "0.5 - 1 วันทำการ",
+            theme: "rose",
+            icon: "fa-cloud-arrow-up"
+          },
+          {
+            id: 6,
+            phase: 2,
+            role: "งานสารบรรณ",
+            title: "อธิการบดีสั่งการกลับมายังตรวจสอบภายใน",
+            description: "1. จารุณี สร้างหนังสือใหม่ เพื่อแจ้งรายงาน/ชี้แจง ไปยังหน่วยรับตรวจ โดยอ้างถึงเลขหนังสือเดิม ไม่มีเอกสารแนบใดๆ เพราะให้ไปอ่านที่หนังสือเดิมที่อ้างถึง\n2. กำหนดตรวจสอบสั่งการ เพิ่มชื่อ \"ผู้อำนวยการสำนักงานการตรวจสอบภายใน\" เพื่อสั่งการ และ \"จารุณี\" เพื่อดำเนินการต่อ\n3. กดส่ง",
+            doc: "ไม่มีเอกสารแนบ",
+            security: "-",
+            sla: "1 วันทำการ",
+            theme: "sky",
+            icon: "fa-file-lines"
+          },
+          {
+            id: 7,
+            phase: 2,
+            role: "ผู้อำนวยการ",
+            title: "พิจารณาและสั่งการ",
+            description: "ผู้อำนวยการพิจารณาสั่งการให้ส่ง รายงาน/ชี้แจง ออกถึงหัวหน้าหน่วยรับตรวจ",
+            doc: "-",
+            security: "-",
+            sla: "1 วันทำการ",
+            theme: "sky",
+            icon: "fa-file-lines"
+          },
+          {
+            id: 8,
+            phase: 2,
+            role: "งานสารบรรณ",
+            title: "ส่งรายงาน/ชี้แจงไปยังหน่วยรับตรวจ",
+            description: "1. ข้อสั่งการผอ. ส่งกลับมาหาจารุณี จารุณี พิมพ์ \"ทราบ ดำเนินการนำส่งหนังสือไปยัง...\"\n2. จารุณี กดออกเลข (ทั่วไปของตรวจสอบภายใน) และกดเสร็จสิ้น\n3. กดส่งหนังสือไปยังหน่วยรับตรวจ",
+            doc: "-",
+            security: "-",
+            sla: "1 วันทำการ",
+            theme: "sky",
+            icon: "fa-file-lines"
+          },
+          {
+            id: 9,
+            phase: 2,
+            role: "งานสารบรรณ",
+            title: "เชื่อมโยงรายงานและแจ้งหน่วยรับตรวจ",
+            description: "1 จารุณี กลับไปพิมพ์ในช่องตรวจสอบสั่งการ ของหนังสือ รง. (ในกระบวนการที่ 1) เพื่อบันทึกการเชื่อมโยงของหนังสือและจัดทำ Link เชื่อมโยงไว้เป็นข้อมูล \"ทราบ ดำเนินการส่ง... ตามหนังสือ ... (Link ที่ส่งไปหน่วยรับตรวจ) ต่อไป\"",
+            doc: "-",
+            security: "เชื่อมโยงเอกสารด้วย Link ในช่องตรวจสอบ/สั่งการไม่ได้ และไม่สามารถค้นหาเรื่องได้",
+            sla: "1 วันทำการ",
+            theme: "rose",
+            icon: "fa-file-lines"
+          }
+        ]
+      }
     };
   </script>
 
   <script>
-    let workflowData = JSON.parse(JSON.stringify(defaultWorkflowData));
-    let isTableView = false;
+    let allWorkflows = JSON.parse(JSON.stringify(defaultMultiWorkflowData));
+    let activeTab = 'financial'; // 'financial' | 'closing' | 'clarification'
+    let currentViewMode = 'detailed'; // 'detailed' | 'compact' | 'table'
     let areAllExpanded = true;
 
     const phaseColors = [
@@ -611,51 +881,101 @@
     };
 
     window.addEventListener('DOMContentLoaded', () => {
-      const saved = localStorage.getItem('internal_audit_workflow_data');
+      const saved = localStorage.getItem('internal_audit_multi_workflow_data');
       if (saved) {
         try {
-          workflowData = JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.financial && parsed.closing && parsed.clarification) {
+            allWorkflows = parsed;
+          }
         } catch (e) {
           console.error("Failed to parse saved data:", e);
         }
       }
-      
-      // Ensure phases exist for backward compatibility
-      if (!workflowData.phases || !Array.isArray(workflowData.phases) || workflowData.phases.length === 0) {
-        workflowData.phases = [
-          {
-            id: 1,
-            title: "กระบวนการที่ 1: การเสนอรายงานผลการตรวจสอบและขออนุมัติข้อสั่งการ",
-            subtitle: "ตั้งแต่ร่างรายงานฉบับสมบูรณ์จนถึงอธิการบดีลงนามข้อสั่งการ",
-            badge: "ภายในสำนักตรวจสอบ ➔ สำนักงานอธิการบดี"
-          },
-          {
-            id: 2,
-            title: "กระบวนการที่ 2: การแจ้งผลและข้อสั่งการแก่หน่วยรับตรวจ",
-            subtitle: "เปิดบันทึกข้อความเรื่องใหม่ ผ่าน ผอ. ลงนามส่งต่อไปยังหน่วยรับตรวจ",
-            badge: "สารบรรณเปิดเรื่องใหม่ ➔ หน่วยรับตรวจ"
-          }
-        ];
+
+      const savedTab = localStorage.getItem('internal_audit_active_tab');
+      if (savedTab && allWorkflows[savedTab]) {
+        activeTab = savedTab;
       }
 
+      const savedView = localStorage.getItem('internal_audit_view_mode');
+      if (savedView && ['detailed', 'compact', 'table'].includes(savedView)) {
+        currentViewMode = savedView;
+      } else {
+        currentViewMode = 'detailed';
+      }
+
+      updateTabUI();
+      updateViewModeUI();
       renderApp();
     });
 
     function saveState() {
-      localStorage.setItem('internal_audit_workflow_data', JSON.stringify(workflowData));
+      localStorage.setItem('internal_audit_multi_workflow_data', JSON.stringify(allWorkflows));
+      localStorage.setItem('internal_audit_active_tab', activeTab);
       const ind = document.getElementById('savedIndicator');
       if (ind) {
         ind.classList.remove('hidden');
         setTimeout(() => ind.classList.add('hidden'), 2500);
       }
+      updateTabBadges();
+    }
+
+    function getCurrentWorkflow() {
+      return allWorkflows[activeTab];
+    }
+
+    function switchWorkflowTab(tabKey) {
+      if (!allWorkflows[tabKey]) return;
+      activeTab = tabKey;
+      localStorage.setItem('internal_audit_active_tab', activeTab);
+      
+      // Reset filter on tab switch
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput) searchInput.value = '';
+      
+      updateTabUI();
+      renderApp();
+    }
+
+    function updateTabUI() {
+      const tabKeys = ['financial', 'closing', 'clarification'];
+      tabKeys.forEach(key => {
+        const btn = document.getElementById(`tab-btn-${key}`);
+        const iconBox = btn.querySelector('.tab-icon-box');
+        const badge = document.getElementById(`tab-count-${key}`);
+        
+        if (key === activeTab) {
+          btn.className = "tab-btn whitespace-nowrap py-2.5 px-4 rounded-xl text-sm font-bold flex items-center gap-2.5 transition border bg-sky-50 text-sky-800 border-sky-300 shadow-xs ring-1 ring-sky-300/60";
+          iconBox.className = "w-7 h-7 rounded-lg flex items-center justify-center text-xs tab-icon-box bg-sky-600 text-white shadow-xs";
+          badge.className = "ml-1 px-2 py-0.5 text-xs rounded-full font-semibold bg-sky-200 text-sky-800";
+        } else {
+          btn.className = "tab-btn whitespace-nowrap py-2.5 px-4 rounded-xl text-sm font-medium flex items-center gap-2.5 transition border bg-white hover:bg-slate-50 text-slate-600 border-slate-200";
+          iconBox.className = "w-7 h-7 rounded-lg flex items-center justify-center text-xs tab-icon-box bg-slate-100 text-slate-500";
+          badge.className = "ml-1 px-2 py-0.5 text-xs rounded-full font-medium bg-slate-100 text-slate-600";
+        }
+      });
+      updateTabBadges();
+    }
+
+    function updateTabBadges() {
+      if (document.getElementById('tab-count-financial')) {
+        document.getElementById('tab-count-financial').textContent = `${allWorkflows.financial.steps.length} ขั้นตอน`;
+      }
+      if (document.getElementById('tab-count-closing')) {
+        document.getElementById('tab-count-closing').textContent = `${allWorkflows.closing.steps.length} ขั้นตอน`;
+      }
+      if (document.getElementById('tab-count-clarification')) {
+        document.getElementById('tab-count-clarification').textContent = `${allWorkflows.clarification.steps.length} ขั้นตอน`;
+      }
     }
 
     function syncPhaseOptions() {
-      // 1. Filter Select
+      const currentWf = getCurrentWorkflow();
       const phaseFilter = document.getElementById('phaseFilter');
       const currentFilterVal = phaseFilter.value;
       phaseFilter.innerHTML = '<option value="ALL">ทุกหมวดหมู่ (แสดงทั้งหมด)</option>';
-      workflowData.phases.forEach((p, idx) => {
+      currentWf.phases.forEach((p) => {
         const opt = document.createElement('option');
         opt.value = p.id.toString();
         opt.textContent = `${p.title}`;
@@ -665,10 +985,9 @@
         phaseFilter.value = currentFilterVal;
       }
 
-      // 2. Step Form Phase Select
       const formPhase = document.getElementById('formPhase');
       formPhase.innerHTML = '';
-      workflowData.phases.forEach((p) => {
+      currentWf.phases.forEach((p) => {
         const opt = document.createElement('option');
         opt.value = p.id.toString();
         opt.textContent = p.title;
@@ -677,15 +996,21 @@
     }
 
     function renderApp() {
-      document.getElementById('wfTitle').textContent = workflowData.title;
-      document.getElementById('wfDesc').textContent = workflowData.description;
+      const currentWf = getCurrentWorkflow();
+
+      document.getElementById('wfTitle').textContent = currentWf.title;
+      document.getElementById('wfDesc').textContent = currentWf.description;
+      document.getElementById('bannerCategoryTag').textContent = currentWf.tag || "มาตรฐานกระบวนการปฏิบัติงาน";
+      document.getElementById('bannerBgIcon').className = `fa-solid ${currentWf.icon || 'fa-folder-tree'}`;
+      document.getElementById('bannerPhaseCount').textContent = `${currentWf.phases.length} กระบวนการหลัก`;
+      document.getElementById('bannerStepCount').textContent = `รวม ${currentWf.steps.length} ขั้นตอน`;
 
       syncPhaseOptions();
 
       const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
       const phaseFilter = document.getElementById('phaseFilter').value;
 
-      const filteredSteps = workflowData.steps.filter(step => {
+      const filteredSteps = currentWf.steps.filter(step => {
         const matchesPhase = (phaseFilter === 'ALL') || (step.phase.toString() === phaseFilter);
         const matchesSearch = !searchTerm || 
           step.role.toLowerCase().includes(searchTerm) ||
@@ -696,12 +1021,22 @@
         return matchesPhase && matchesSearch;
       });
 
-      // Render Dynamic Flowchart by Phases
+      // 1. Render Detailed Flowchart
+      renderDetailedFlowchart(filteredSteps, currentWf, phaseFilter);
+
+      // 2. Render Compact Diagram (ผังย่อสไตล์ Flowchart Diagram)
+      renderCompactDiagram(filteredSteps, currentWf, phaseFilter);
+
+      // 3. Render SOP Table
+      renderTable(filteredSteps);
+    }
+
+    function renderDetailedFlowchart(filteredSteps, currentWf, phaseFilter) {
       const flowchartContainer = document.getElementById('flowchartView');
       flowchartContainer.innerHTML = '';
 
       let globalRunningCounter = 1;
-      const visiblePhases = workflowData.phases.filter(p => phaseFilter === 'ALL' || p.id.toString() === phaseFilter);
+      const visiblePhases = currentWf.phases.filter(p => phaseFilter === 'ALL' || p.id.toString() === phaseFilter);
 
       visiblePhases.forEach((phase, phaseIndex) => {
         const colorSet = phaseColors[phaseIndex % phaseColors.length];
@@ -740,7 +1075,7 @@
                         class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition">
                   <i class="fa-solid fa-pen-to-square text-xs"></i>
                 </button>
-                <button type="button" onclick="deletePhase(${phase.id})" title="ลบกระบวนการนี้" 
+                <button type="button" onclick="requestDeletePhase(${phase.id})" title="ลบกระบวนการนี้" 
                         class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition">
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
@@ -770,7 +1105,6 @@
 
         flowchartContainer.appendChild(phaseSection);
 
-        // Add visual bridge indicator if not the last visible phase
         if (phaseIndex < visiblePhases.length - 1) {
           const bridge = document.createElement('div');
           bridge.className = "flex flex-col items-center justify-center py-1 no-print";
@@ -785,80 +1119,214 @@
           flowchartContainer.appendChild(bridge);
         }
       });
-
-      renderTable(filteredSteps);
     }
 
-    // Modal & Operations for Phases
-    function openAddPhaseModal() {
-      document.getElementById('editPhaseId').value = '';
-      const nextNum = workflowData.phases.length + 1;
-      document.getElementById('formPhaseTitle').value = `กระบวนการที่ ${nextNum}: `;
-      document.getElementById('formPhaseSubtitle').value = '';
-      document.getElementById('formPhaseBadge').value = '';
-      document.getElementById('phaseModalTitle').textContent = 'เพิ่มกระบวนการใหม่';
-      document.getElementById('phaseModal').classList.remove('hidden');
-    }
+    function renderCompactDiagram(filteredSteps, currentWf, phaseFilter) {
+      const container = document.getElementById('compactDiagramView');
+      if (!container) return;
+      container.innerHTML = '';
 
-    function openEditPhaseModal(phaseId) {
-      const phase = workflowData.phases.find(p => p.id === phaseId);
-      if (!phase) return;
+      const visiblePhases = currentWf.phases.filter(p => phaseFilter === 'ALL' || p.id.toString() === phaseFilter);
 
-      document.getElementById('editPhaseId').value = phase.id;
-      document.getElementById('formPhaseTitle').value = phase.title;
-      document.getElementById('formPhaseSubtitle').value = phase.subtitle || '';
-      document.getElementById('formPhaseBadge').value = phase.badge || '';
-      document.getElementById('phaseModalTitle').textContent = `แก้ไข: ${phase.title}`;
-      document.getElementById('phaseModal').classList.remove('hidden');
-    }
+      // Diagram Header bar
+      const headerDiv = document.createElement('div');
+      headerDiv.className = "flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-6 border-b border-slate-200 mb-8";
+      headerDiv.innerHTML = `
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <h3 class="font-heading font-bold text-lg text-slate-800">ผังภาพรวมกระบวนการ (Compact Visual Flowchart)</h3>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">แสดงเฉพาะหัวข้อสำคัญ ลำดับบทบาท และจุดสอบทาน/สั่งการ เพื่อให้เห็นภาพเส้นทางเอกสารทั้งหมดได้อย่างรวดเร็ว (คลิกที่กล่องเพื่อแก้ไขได้ทันที)</p>
+        </div>
+        <div class="flex items-center gap-3 text-xs text-slate-500">
+          <span class="inline-flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block"></span> เริ่มต้น/เสร็จสิ้น</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-sky-100 border border-sky-300 inline-block"></span> ขั้นตอนปฏิบัติ</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-3.5 h-3.5 rotate-45 rounded-xs bg-amber-100 border border-amber-400 inline-block"></span> จุดพิจารณา/สอบทาน</span>
+        </div>
+      `;
+      container.appendChild(headerDiv);
 
-    function closePhaseModal() {
-      document.getElementById('phaseModal').classList.add('hidden');
-    }
+      const flowCanvas = document.createElement('div');
+      flowCanvas.className = "flex flex-col items-center max-w-3xl mx-auto space-y-4";
 
-    function handleSavePhase(event) {
-      event.preventDefault();
-      const idVal = document.getElementById('editPhaseId').value;
-      const title = document.getElementById('formPhaseTitle').value.trim();
-      const subtitle = document.getElementById('formPhaseSubtitle').value.trim();
-      const badge = document.getElementById('formPhaseBadge').value.trim();
+      // START NODE (Pill shape)
+      const startNode = document.createElement('div');
+      startNode.className = "px-6 py-2.5 rounded-full bg-emerald-600 text-white font-bold text-sm shadow-md flex items-center gap-2 tracking-wide";
+      startNode.innerHTML = `<i class="fa-solid fa-play text-xs"></i> <span>เริ่มต้นกระบวนการ</span>`;
+      flowCanvas.appendChild(startNode);
 
-      if (idVal) {
-        const phaseId = parseInt(idVal, 10);
-        const idx = workflowData.phases.findIndex(p => p.id === phaseId);
-        if (idx !== -1) {
-          workflowData.phases[idx] = { ...workflowData.phases[idx], title, subtitle, badge };
-          showToast('แก้ไขข้อมูลกระบวนการเรียบร้อยแล้ว', 'success');
+      let runningNum = 1;
+
+      visiblePhases.forEach((phase, phaseIdx) => {
+        const stepsInPhase = filteredSteps.filter(s => s.phase === phase.id);
+
+        // Connector Arrow to Phase
+        flowCanvas.appendChild(createDiagramConnectorArrow());
+
+        // Phase Container Frame
+        const phaseFrame = document.createElement('div');
+        phaseFrame.className = "w-full bg-slate-50/80 border-2 border-dashed border-slate-200 rounded-3xl p-5 sm:p-7 relative transition hover:border-slate-300";
+
+        // Phase Header Badge
+        const phaseBadge = document.createElement('div');
+        phaseBadge.className = "mb-6 text-center";
+        phaseBadge.innerHTML = `
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-bold shadow-xs">
+            <i class="fa-solid fa-layer-group text-indigo-600"></i>
+            <span>${escapeHtml(phase.title)}</span>
+          </div>
+          ${phase.badge ? `<div class="text-[11px] text-slate-500 mt-1">${escapeHtml(phase.badge)}</div>` : ''}
+        `;
+        phaseFrame.appendChild(phaseBadge);
+
+        const phaseNodesWrapper = document.createElement('div');
+        phaseNodesWrapper.className = "flex flex-col items-center space-y-4";
+
+        if (stepsInPhase.length === 0) {
+          phaseNodesWrapper.innerHTML = `
+            <div class="py-6 text-xs text-slate-400">ยังไม่มีขั้นตอนในกระบวนการนี้</div>
+          `;
+        } else {
+          stepsInPhase.forEach((step, stepIdx) => {
+            const isDecisionNode = checkIfDecisionNode(step);
+            const stepNode = createDiagramStepNode(step, runningNum++, isDecisionNode);
+            phaseNodesWrapper.appendChild(stepNode);
+
+            if (stepIdx < stepsInPhase.length - 1) {
+              phaseNodesWrapper.appendChild(createDiagramConnectorArrow());
+            }
+          });
         }
-      } else {
-        const newId = workflowData.phases.length ? Math.max(...workflowData.phases.map(p => p.id)) + 1 : 1;
-        workflowData.phases.push({ id: newId, title, subtitle, badge });
-        showToast('เพิ่มกระบวนการใหม่สำเร็จแล้ว', 'success');
-      }
 
-      closePhaseModal();
-      saveState();
-      renderApp();
+        phaseFrame.appendChild(phaseNodesWrapper);
+        flowCanvas.appendChild(phaseFrame);
+
+        // Transition Arrow between Phases
+        if (phaseIdx < visiblePhases.length - 1) {
+          const phaseBridge = document.createElement('div');
+          phaseBridge.className = "flex flex-col items-center py-2";
+          phaseBridge.innerHTML = `
+            <div class="w-0.5 h-6 bg-indigo-300"></div>
+            <div class="bg-indigo-600 text-white text-[11px] font-semibold px-3 py-1 rounded-full shadow-xs flex items-center gap-1.5 my-1">
+              <i class="fa-solid fa-arrow-down"></i> ส่งต่อกระบวนการถัดไป
+            </div>
+            <div class="w-0.5 h-6 bg-indigo-300"></div>
+          `;
+          flowCanvas.appendChild(phaseBridge);
+        }
+      });
+
+      // END NODE (Pill shape)
+      flowCanvas.appendChild(createDiagramConnectorArrow());
+      const endNode = document.createElement('div');
+      endNode.className = "px-6 py-2.5 rounded-full bg-slate-800 text-white font-bold text-sm shadow-md flex items-center gap-2 tracking-wide";
+      endNode.innerHTML = `<i class="fa-solid fa-flag-checkered text-xs"></i> <span>สิ้นสุดกระบวนการ / ส่งมอบเสร็จสิ้น</span>`;
+      flowCanvas.appendChild(endNode);
+
+      container.appendChild(flowCanvas);
     }
 
-    function deletePhase(phaseId) {
-      const phase = workflowData.phases.find(p => p.id === phaseId);
-      if (!phase) return;
+    function checkIfDecisionNode(step) {
+      const text = `${step.role} ${step.title}`.toLowerCase();
+      return text.includes('สอบทาน') || text.includes('พิจารณา') || text.includes('สั่งการ') || text.includes('เห็นชอบ') || text.includes('อนุมัติ');
+    }
 
-      const stepsCount = workflowData.steps.filter(s => s.phase === phaseId).length;
-      let confirmMsg = `คุณต้องการลบ "${phase.title}" ใช่หรือไม่?`;
-      if (stepsCount > 0) {
-        confirmMsg = `กระบวนการนี้มีขั้นตอนอยู่ทั้งหมด ${stepsCount} ขั้นตอน หากลบกระบวนการนี้ ขั้นตอนทั้งหมดจะถูกลบไปด้วย คุณแน่ใจหรือไม่?`;
+    function createDiagramConnectorArrow(labelText) {
+      const arrowWrap = document.createElement('div');
+      arrowWrap.className = "flex flex-col items-center justify-center my-0.5";
+      arrowWrap.innerHTML = `
+        <div class="w-0.5 h-5 bg-slate-300"></div>
+        <div class="text-slate-400 text-xs leading-none -mt-1">
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        ${labelText ? `<span class="text-[10px] text-slate-500 font-medium px-2 bg-white rounded border border-slate-200 mt-0.5">${escapeHtml(labelText)}</span>` : ''}
+      `;
+      return arrowWrap;
+    }
+
+    function createDiagramStepNode(step, num, isDecision) {
+      const node = document.createElement('div');
+      node.className = "w-full max-w-md group cursor-pointer transition transform hover:-translate-y-0.5";
+      node.onclick = () => openEditModal(step.id);
+
+      // Extract brief description (take first line or first 90 chars)
+      const firstLine = (step.description || '').split('\n')[0];
+      const shortDesc = firstLine.length > 85 ? firstLine.slice(0, 85) + '...' : firstLine;
+
+      if (isDecision) {
+        // Decision Node (Diamond accent style)
+        node.innerHTML = `
+          <div class="relative bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-amber-400 transition">
+            <!-- Diamond badge indicator -->
+            <div class="absolute -top-3 left-6 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-xs flex items-center gap-1">
+              <i class="fa-solid fa-square-check text-[9px]"></i> ตรวจสอบ / พิจารณา
+            </div>
+            
+            <div class="flex items-start justify-between gap-3 mt-1">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                  ${num}
+                </span>
+                <div>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-xs font-bold text-amber-900 bg-amber-200/70 px-2 py-0.5 rounded-md">
+                      ${escapeHtml(step.role)}
+                    </span>
+                    ${step.sla ? `<span class="text-[11px] text-amber-700/80"><i class="fa-regular fa-clock"></i> ${escapeHtml(step.sla)}</span>` : ''}
+                  </div>
+                  <h4 class="font-bold text-slate-800 text-sm mt-1 leading-snug">
+                    ${escapeHtml(step.title)}
+                  </h4>
+                </div>
+              </div>
+
+              <div class="opacity-0 group-hover:opacity-100 transition text-amber-700 bg-amber-100 hover:bg-amber-200 p-1.5 rounded-lg text-xs shrink-0 no-print" title="คลิกเพื่อแก้ไข">
+                <i class="fa-solid fa-pen"></i>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-600 mt-2 line-clamp-2 pl-8 border-l-2 border-amber-300">
+              ${escapeHtml(shortDesc)}
+            </p>
+          </div>
+        `;
+      } else {
+        // Standard Process Node (Clean rectangle style with soft theme)
+        const theme = themeStyles[step.theme] || themeStyles.sky;
+        node.innerHTML = `
+          <div class="relative bg-white border-2 border-slate-200 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-sky-300 transition">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-lg ${theme.circle} flex items-center justify-center text-xs font-bold shrink-0">
+                  ${num}
+                </span>
+                <div>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-xs font-bold ${theme.badge} px-2 py-0.5 rounded-md">
+                      <i class="fa-solid ${step.icon || 'fa-circle-dot'} text-[10px] mr-1"></i>${escapeHtml(step.role)}
+                    </span>
+                    ${step.sla ? `<span class="text-[11px] text-slate-400"><i class="fa-regular fa-clock"></i> ${escapeHtml(step.sla)}</span>` : ''}
+                  </div>
+                  <h4 class="font-bold text-slate-800 text-sm mt-1 leading-snug">
+                    ${escapeHtml(step.title)}
+                  </h4>
+                </div>
+              </div>
+
+              <div class="opacity-0 group-hover:opacity-100 transition text-sky-700 bg-sky-50 hover:bg-sky-100 p-1.5 rounded-lg text-xs shrink-0 no-print" title="คลิกเพื่อแก้ไข">
+                <i class="fa-solid fa-pen"></i>
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-500 mt-2 line-clamp-2 pl-8 border-l-2 border-slate-200">
+              ${escapeHtml(shortDesc)}
+            </p>
+          </div>
+        `;
       }
 
-      const confirmed = window.confirm(confirmMsg);
-      if (confirmed) {
-        workflowData.phases = workflowData.phases.filter(p => p.id !== phaseId);
-        workflowData.steps = workflowData.steps.filter(s => s.phase !== phaseId);
-        saveState();
-        renderApp();
-        showToast('ลบกระบวนการเรียบร้อยแล้ว', 'info');
-      }
+      return node;
     }
 
     function createStepCardElement(step, globalNumber) {
@@ -866,7 +1334,10 @@
       const card = document.createElement('div');
       card.className = "card-step relative pl-14 sm:pl-16 transition-all duration-200";
 
-      const formattedDesc = step.description.split('\n').map(line => `<p class="mt-1">${escapeHtml(line)}</p>`).join('');
+      const formattedDesc = (step.description || '')
+        .split('\n')
+        .map(line => `<p class="mt-1">${escapeHtml(line)}</p>`)
+        .join('');
 
       card.innerHTML = `
         <div class="absolute left-2.5 sm:left-3.5 top-5 -translate-x-1/2 w-9 h-9 rounded-full ${theme.circle} flex items-center justify-center font-bold text-sm shadow-md ring-4 ring-white z-10">
@@ -905,7 +1376,7 @@
                 <button type="button" onclick="openEditModal(${step.id})" title="แก้ไขรายละเอียด" class="px-2.5 py-1 text-xs font-medium text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-md transition flex items-center gap-1">
                   <i class="fa-solid fa-pen-to-square"></i> แก้ไข
                 </button>
-                <button type="button" onclick="deleteStep(${step.id})" title="ลบขั้นตอนนี้" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition">
+                <button type="button" onclick="requestDeleteStep(${step.id})" title="ลบขั้นตอนนี้" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition">
                   <i class="fa-solid fa-trash-can text-xs"></i>
                 </button>
               </div>
@@ -938,9 +1409,10 @@
 
     function renderTable(steps) {
       const tbody = document.getElementById('sopTableBody');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
-      if (!steps.length) {
+      if (!steps || !steps.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-400">ไม่พบขั้นตอนที่ตรงกับคำค้นหา</td></tr>';
         return;
       }
@@ -978,17 +1450,18 @@
             <button type="button" onclick="openEditModal(${step.id})" class="p-1.5 text-sky-600 hover:bg-sky-50 rounded-md transition ml-1" title="แก้ไข">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
-            <button type="button" onclick="deleteStep(${step.id})" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-md transition ml-1" title="ลบ">
+            <button type="button" onclick="requestDeleteStep(${step.id})" class="p-1.5 text-rose-500 hover:bg-rose-50 rounded-md transition ml-1" title="ลบ">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
-        </tr>`;
+        `;
         tbody.appendChild(tr);
       });
     }
 
     function openEditModal(id) {
-      const step = workflowData.steps.find(s => s.id === id);
+      const currentWf = getCurrentWorkflow();
+      const step = currentWf.steps.find(s => s.id === id);
       if (!step) return;
 
       document.getElementById('editStepId').value = step.id;
@@ -1008,11 +1481,12 @@
     }
 
     function openAddStepAfter(afterId) {
-      const targetStep = workflowData.steps.find(s => s.id === afterId);
+      const currentWf = getCurrentWorkflow();
+      const targetStep = currentWf.steps.find(s => s.id === afterId);
 
       document.getElementById('editStepId').value = '';
       document.getElementById('insertAfterId').value = afterId ? afterId.toString() : '';
-      document.getElementById('formPhase').value = targetStep ? targetStep.phase.toString() : (workflowData.phases[0]?.id?.toString() || '1');
+      document.getElementById('formPhase').value = targetStep ? targetStep.phase.toString() : (currentWf.phases[0]?.id?.toString() || '1');
       document.getElementById('formRole').value = '';
       document.getElementById('formTitle').value = '';
       document.getElementById('formDesc').value = '';
@@ -1036,12 +1510,49 @@
       }
     }
 
+    function setViewMode(mode) {
+      if (!['detailed', 'compact', 'table'].includes(mode)) return;
+      currentViewMode = mode;
+      localStorage.setItem('internal_audit_view_mode', currentViewMode);
+      updateViewModeUI();
+    }
+
+    function updateViewModeUI() {
+      const detailedView = document.getElementById('flowchartView');
+      const compactView = document.getElementById('compactDiagramView');
+      const tableView = document.getElementById('tableView');
+
+      const btnDetailed = document.getElementById('btnViewDetailed');
+      const btnCompact = document.getElementById('btnViewCompact');
+      const btnTable = document.getElementById('btnViewTable');
+
+      if (detailedView) detailedView.classList.add('hidden');
+      if (compactView) compactView.classList.add('hidden');
+      if (tableView) tableView.classList.add('hidden');
+
+      [btnDetailed, btnCompact, btnTable].forEach(btn => {
+        if (btn) btn.className = "px-3 py-1.5 rounded-md transition text-slate-700 hover:text-sky-700";
+      });
+
+      if (currentViewMode === 'detailed') {
+        if (detailedView) detailedView.classList.remove('hidden');
+        if (btnDetailed) btnDetailed.className = "px-3 py-1.5 rounded-md transition bg-white text-sky-700 font-bold shadow-xs";
+      } else if (currentViewMode === 'compact') {
+        if (compactView) compactView.classList.remove('hidden');
+        if (btnCompact) btnCompact.className = "px-3 py-1.5 rounded-md transition bg-white text-sky-700 font-bold shadow-xs";
+      } else if (currentViewMode === 'table') {
+        if (tableView) tableView.classList.remove('hidden');
+        if (btnTable) btnTable.className = "px-3 py-1.5 rounded-md transition bg-white text-sky-700 font-bold shadow-xs";
+      }
+    }
+
     function closeModal() {
       document.getElementById('stepModal').classList.add('hidden');
     }
 
     function handleSaveStep(event) {
       event.preventDefault();
+      const currentWf = getCurrentWorkflow();
       const idVal = document.getElementById('editStepId').value;
       const insertAfterVal = document.getElementById('insertAfterId').value;
       const phase = parseInt(document.getElementById('formPhase').value, 10);
@@ -1056,16 +1567,16 @@
 
       if (idVal) {
         const stepId = parseInt(idVal, 10);
-        const idx = workflowData.steps.findIndex(s => s.id === stepId);
+        const idx = currentWf.steps.findIndex(s => s.id === stepId);
         if (idx !== -1) {
-          workflowData.steps[idx] = {
-            ...workflowData.steps[idx],
+          currentWf.steps[idx] = {
+            ...currentWf.steps[idx],
             phase, role, title, description: desc, doc, security, sla, theme, icon
           };
           showToast('บันทึกการแก้ไขขั้นตอนสำเร็จ', 'success');
         }
       } else {
-        const newId = workflowData.steps.length ? Math.max(...workflowData.steps.map(s => s.id)) + 1 : 1;
+        const newId = currentWf.steps.length ? Math.max(...currentWf.steps.map(s => s.id)) + 1 : 1;
         const newStep = {
           id: newId,
           phase, role, title, description: desc, doc, security, sla, theme, icon
@@ -1073,15 +1584,14 @@
 
         if (insertAfterVal) {
           const targetId = parseInt(insertAfterVal, 10);
-          const targetIndex = workflowData.steps.findIndex(s => s.id === targetId);
+          const targetIndex = currentWf.steps.findIndex(s => s.id === targetId);
           if (targetIndex !== -1) {
-            // แทรกขั้นตอนใหม่ต่อท้ายขั้นตอนที่เลือกทันที
-            workflowData.steps.splice(targetIndex + 1, 0, newStep);
+            currentWf.steps.splice(targetIndex + 1, 0, newStep);
           } else {
-            workflowData.steps.push(newStep);
+            currentWf.steps.push(newStep);
           }
         } else {
-          workflowData.steps.push(newStep);
+          currentWf.steps.push(newStep);
         }
 
         showToast('เพิ่มขั้นตอนต่อท้ายเรียบร้อยแล้ว', 'success');
@@ -1092,31 +1602,32 @@
       renderApp();
     }
 
-    function deleteStep(id) {
-      const step = workflowData.steps.find(s => s.id === id);
+    function requestDeleteStep(id) {
+      const currentWf = getCurrentWorkflow();
+      const step = currentWf.steps.find(s => s.id === id);
       if (!step) return;
 
-      const confirmed = window.confirm(`คุณต้องการลบขั้นตอน "${step.title}" (${step.role}) ใช่หรือไม่?`);
-      if (confirmed) {
-        workflowData.steps = workflowData.steps.filter(s => s.id !== id);
+      showConfirmDialog(`คุณต้องการลบขั้นตอน "${step.title}" (${step.role}) ออกจาก${currentWf.tabTitle} ใช่หรือไม่?`, () => {
+        currentWf.steps = currentWf.steps.filter(s => s.id !== id);
         saveState();
         renderApp();
-        showToast('ลบขั้นตอนออกจากผังงานแล้ว', 'info');
-      }
+        showToast('ลบขั้นตอนเรียบร้อยแล้ว', 'info');
+      });
     }
 
     function moveStep(id, direction) {
-      const idx = workflowData.steps.findIndex(s => s.id === id);
+      const currentWf = getCurrentWorkflow();
+      const idx = currentWf.steps.findIndex(s => s.id === id);
       if (idx === -1) return;
 
       if (direction === 'up' && idx > 0) {
-        const temp = workflowData.steps[idx];
-        workflowData.steps[idx] = workflowData.steps[idx - 1];
-        workflowData.steps[idx - 1] = temp;
-      } else if (direction === 'down' && idx < workflowData.steps.length - 1) {
-        const temp = workflowData.steps[idx];
-        workflowData.steps[idx] = workflowData.steps[idx + 1];
-        workflowData.steps[idx + 1] = temp;
+        const temp = currentWf.steps[idx];
+        currentWf.steps[idx] = currentWf.steps[idx - 1];
+        currentWf.steps[idx - 1] = temp;
+      } else if (direction === 'down' && idx < currentWf.steps.length - 1) {
+        const temp = currentWf.steps[idx];
+        currentWf.steps[idx] = currentWf.steps[idx + 1];
+        currentWf.steps[idx + 1] = temp;
       } else {
         return;
       }
@@ -1125,9 +1636,84 @@
       renderApp();
     }
 
+    function openAddPhaseModal() {
+      const currentWf = getCurrentWorkflow();
+      document.getElementById('editPhaseId').value = '';
+      const nextNum = currentWf.phases.length + 1;
+      document.getElementById('formPhaseTitle').value = `กระบวนการที่ ${nextNum}: `;
+      document.getElementById('formPhaseSubtitle').value = '';
+      document.getElementById('formPhaseBadge').value = '';
+      document.getElementById('phaseModalTitle').textContent = `เพิ่มกระบวนการใหม่ (${currentWf.tabTitle})`;
+      document.getElementById('phaseModal').classList.remove('hidden');
+    }
+
+    function openEditPhaseModal(phaseId) {
+      const currentWf = getCurrentWorkflow();
+      const phase = currentWf.phases.find(p => p.id === phaseId);
+      if (!phase) return;
+
+      document.getElementById('editPhaseId').value = phase.id;
+      document.getElementById('formPhaseTitle').value = phase.title;
+      document.getElementById('formPhaseSubtitle').value = phase.subtitle || '';
+      document.getElementById('formPhaseBadge').value = phase.badge || '';
+      document.getElementById('phaseModalTitle').textContent = `แก้ไข: ${phase.title}`;
+      document.getElementById('phaseModal').classList.remove('hidden');
+    }
+
+    function closePhaseModal() {
+      document.getElementById('phaseModal').classList.add('hidden');
+    }
+
+    function handleSavePhase(event) {
+      event.preventDefault();
+      const currentWf = getCurrentWorkflow();
+      const idVal = document.getElementById('editPhaseId').value;
+      const title = document.getElementById('formPhaseTitle').value.trim();
+      const subtitle = document.getElementById('formPhaseSubtitle').value.trim();
+      const badge = document.getElementById('formPhaseBadge').value.trim();
+
+      if (idVal) {
+        const phaseId = parseInt(idVal, 10);
+        const idx = currentWf.phases.findIndex(p => p.id === phaseId);
+        if (idx !== -1) {
+          currentWf.phases[idx] = { ...currentWf.phases[idx], title, subtitle, badge };
+          showToast('แก้ไขข้อมูลกระบวนการเรียบร้อยแล้ว', 'success');
+        }
+      } else {
+        const newId = currentWf.phases.length ? Math.max(...currentWf.phases.map(p => p.id)) + 1 : 1;
+        currentWf.phases.push({ id: newId, title, subtitle, badge });
+        showToast('เพิ่มกระบวนการใหม่สำเร็จแล้ว', 'success');
+      }
+
+      closePhaseModal();
+      saveState();
+      renderApp();
+    }
+
+    function requestDeletePhase(phaseId) {
+      const currentWf = getCurrentWorkflow();
+      const phase = currentWf.phases.find(p => p.id === phaseId);
+      if (!phase) return;
+
+      const stepsCount = currentWf.steps.filter(s => s.phase === phaseId).length;
+      let confirmMsg = `คุณต้องการลบ "${phase.title}" ใช่หรือไม่?`;
+      if (stepsCount > 0) {
+        confirmMsg = `กระบวนการนี้มีขั้นตอนอยู่ ${stepsCount} ขั้นตอน หากลบกระบวนการนี้ ขั้นตอนทั้งหมดจะถูกลบไปด้วย คุณแน่ใจหรือไม่?`;
+      }
+
+      showConfirmDialog(confirmMsg, () => {
+        currentWf.phases = currentWf.phases.filter(p => p.id !== phaseId);
+        currentWf.steps = currentWf.steps.filter(s => s.phase !== phaseId);
+        saveState();
+        renderApp();
+        showToast('ลบกระบวนการเรียบร้อยแล้ว', 'info');
+      });
+    }
+
     function editWorkflowInfo() {
-      document.getElementById('editWfTitle').value = workflowData.title;
-      document.getElementById('editWfDesc').value = workflowData.description;
+      const currentWf = getCurrentWorkflow();
+      document.getElementById('editWfTitle').value = currentWf.title;
+      document.getElementById('editWfDesc').value = currentWf.description;
       document.getElementById('headerModal').classList.remove('hidden');
     }
 
@@ -1136,22 +1722,23 @@
     }
 
     function saveWorkflowHeader() {
-      workflowData.title = document.getElementById('editWfTitle').value.trim() || workflowData.title;
-      workflowData.description = document.getElementById('editWfDesc').value.trim() || workflowData.description;
+      const currentWf = getCurrentWorkflow();
+      currentWf.title = document.getElementById('editWfTitle').value.trim() || currentWf.title;
+      currentWf.description = document.getElementById('editWfDesc').value.trim() || currentWf.description;
       closeHeaderModal();
       saveState();
       renderApp();
       showToast('ปรับปรุงข้อมูลหัวเรื่องสำเร็จ', 'success');
     }
 
-    function resetToDefaultData() {
-      const confirmed = window.confirm('คุณต้องการรีเซ็ตข้อมูลทั้งหมดกลับเป็นค่าเริ่มต้นตามเทมเพลตเดิมหรือไม่?');
-      if (confirmed) {
-        workflowData = JSON.parse(JSON.stringify(defaultWorkflowData));
-        localStorage.removeItem('internal_audit_workflow_data');
+    function requestResetToDefaultData() {
+      showConfirmDialog('คุณต้องการรีเซ็ตข้อมูลทั้ง 3 งานกลับเป็นค่าเริ่มต้นเดิมตามเทมเพลตหรือไม่? ข้อมูลที่แก้ไขจะถูกแทนที่ทั้งหมด', () => {
+        allWorkflows = JSON.parse(JSON.stringify(defaultMultiWorkflowData));
+        localStorage.removeItem('internal_audit_multi_workflow_data');
+        updateTabUI();
         renderApp();
-        showToast('คืนค่าเทมเพลตเริ่มต้นเรียบร้อยแล้ว', 'info');
-      }
+        showToast('คืนค่าเทมเพลตเริ่มต้นทั้ง 3 งานเรียบร้อยแล้ว', 'info');
+      });
     }
 
     function toggleViewMode() {
@@ -1186,7 +1773,7 @@
       try {
         const scriptElement = document.getElementById('embedded-data');
         if (scriptElement) {
-          scriptElement.textContent = '\n    const defaultWorkflowData = ' + JSON.stringify(workflowData, null, 2) + ';\n  ';
+          scriptElement.textContent = '\n    const defaultMultiWorkflowData = ' + JSON.stringify(allWorkflows, null, 2) + ';\n  ';
         }
 
         const fullHtml = '<!DOCTYPE html>\n<html lang="th">\n' + document.documentElement.outerHTML + '\n</html>';
@@ -1196,7 +1783,7 @@
         });
 
         const downloadLink = document.createElement('a');
-        const filename = 'Workflow_InternalAudit_' + new Date().toISOString().slice(0, 10) + '.html';
+        const filename = 'Workflow_InternalAudit_3Flows_' + new Date().toISOString().slice(0, 10) + '.html';
         downloadLink.href = URL.createObjectURL(blob);
         downloadLink.download = filename;
         document.body.appendChild(downloadLink);
@@ -1204,11 +1791,36 @@
         document.body.removeChild(downloadLink);
         URL.revokeObjectURL(downloadLink.href);
 
-        showToast('ส่งออกไฟล์ "' + filename + '" สำเร็จแล้ว!', 'success');
+        showToast('ส่งออกไฟล์ 3 Flow "' + filename + '" สำเร็จแล้ว!', 'success');
       } catch (err) {
         console.error("Export error:", err);
         showToast('เกิดข้อผิดพลาดในการส่งออกไฟล์', 'error');
       }
+    }
+
+    function showConfirmDialog(message, onConfirm) {
+      const modal = document.getElementById('confirmModal');
+      const msgEl = document.getElementById('confirmModalMessage');
+      const okBtn = document.getElementById('confirmOkBtn');
+      const cancelBtn = document.getElementById('confirmCancelBtn');
+
+      msgEl.textContent = message;
+      modal.classList.remove('hidden');
+
+      const cleanup = () => {
+        modal.classList.add('hidden');
+        okBtn.onclick = null;
+        cancelBtn.onclick = null;
+      };
+
+      okBtn.onclick = () => {
+        cleanup();
+        if (typeof onConfirm === 'function') onConfirm();
+      };
+
+      cancelBtn.onclick = () => {
+        cleanup();
+      };
     }
 
     function showToast(message, type) {
